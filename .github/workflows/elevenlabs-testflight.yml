@@ -1,0 +1,80 @@
+name: ElevenLabs Expo update
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/elevenlabs-testflight.yml'
+      - 'apps/ElevenLabs/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/elevenlabs-testflight.yml'
+      - 'apps/ElevenLabs/.eas/workflows/**'
+      - 'apps/ElevenLabs/.eas/build/**'
+      - 'apps/ElevenLabs/.easignore'
+      - 'apps/ElevenLabs/scripts/publish-ios-update.sh'
+      - 'apps/ElevenLabs/scripts/build-ios-local.sh'
+      - 'apps/ElevenLabs/App.js'
+      - 'apps/ElevenLabs/index.js'
+      - 'apps/ElevenLabs/app.json'
+      - 'apps/ElevenLabs/eas.json'
+      - 'apps/ElevenLabs/fingerprint.config.cjs'
+      - 'apps/ElevenLabs/babel.config.js'
+      - 'apps/ElevenLabs/metro.config.js'
+      - 'apps/ElevenLabs/package.json'
+      - 'apps/ElevenLabs/package-lock.json'
+      - 'apps/ElevenLabs/ios/**'
+      - 'tests/ios-release-contract.test.mjs'
+
+concurrency:
+  group: elevenlabs-ios-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Verify and publish the Expo update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install Expo app dependencies
+        run: npm ci --prefix apps/ElevenLabs
+
+      - name: Check release and product contracts
+        if: github.event_name == 'pull_request'
+        run: npm test
+
+      - name: Export the iOS JavaScript bundle
+        if: github.event_name == 'pull_request'
+        run: npm run export:ios --prefix apps/ElevenLabs
+
+      - name: Validate Expo native configuration
+        if: github.event_name == 'pull_request'
+        working-directory: apps/ElevenLabs
+        run: |
+          npx expo-updates configuration:syncnative --platform ios --workflow generic
+          git diff --exit-code -- ios
+
+      - name: Set up Expo Update
+        if: github.event_name == 'push' && vars.ELEVENLABS_PUBLISH_ENABLED == 'true'
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: 22.2.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish the production update
+        if: github.event_name == 'push' && vars.ELEVENLABS_PUBLISH_ENABLED == 'true'
+        working-directory: apps/ElevenLabs
+        run: npm run eas:update -- --message "GitHub $GITHUB_SHA"

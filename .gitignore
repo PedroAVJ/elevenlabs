@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+DerivedData/
+
+# Private operator configuration and design exports
+.publication-local/
+AGENTS.local.md
+docs/design/claude-design/

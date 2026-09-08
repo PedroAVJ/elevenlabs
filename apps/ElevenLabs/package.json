@@ -1,0 +1,41 @@
+{
+  "name": "elevenlabs-ios",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "description": "Expo iPhone app with native Dictation Button keyboard and Live Activity extensions",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "ios": "expo run:ios",
+    "export:ios": "expo export --platform ios --output-dir dist",
+    "fingerprint:ios": "expo-updates fingerprint:generate --platform ios",
+    "test": "npm run export:ios && swift test --jobs 1",
+    "eas:inspect": "npx --yes eas-cli@22.2.0 build:inspect --platform ios --profile production --stage archive --output .eas-inspect --force",
+    "eas:validate": "npx --yes eas-cli@22.2.0 workflow:validate .eas/workflows/submit-existing-build.yml --non-interactive",
+    "eas:update": "bash scripts/publish-ios-update.sh",
+    "eas:native:check": "bash scripts/build-ios-local.sh --check",
+    "eas:build:local": "bash scripts/build-ios-local.sh",
+    "eas:plan": "npm run eas:native:check",
+    "eas:release": "npm run eas:update"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheck": {
+        "enabled": false
+      }
+    }
+  },
+  "dependencies": {
+    "expo": "~57.0.16",
+    "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.17",
+    "react": "19.2.3",
+    "react-native": "0.86.2"
+  },
+  "devDependencies": {
+    "babel-preset-expo": "~57.0.0"
+  }
+}

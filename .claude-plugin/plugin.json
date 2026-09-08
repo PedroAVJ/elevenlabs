@@ -1,0 +1,23 @@
+{
+  "name": "elevenlabs",
+  "version": "0.7.37",
+  "description": "Use ElevenLabs through agent audio tools and the native Dictation Button app.",
+  "author": {
+    "name": "PedroAVJ",
+    "url": "https://github.com/PedroAVJ"
+  },
+  "homepage": "https://github.com/PedroAVJ/elevenlabs",
+  "repository": "https://github.com/PedroAVJ/elevenlabs",
+  "license": "MIT",
+  "keywords": [
+    "elevenlabs",
+    "audio",
+    "speech",
+    "scribe",
+    "dictation",
+    "macos",
+    "ios",
+    "voice"
+  ],
+  "skills": "./skills/"
+}

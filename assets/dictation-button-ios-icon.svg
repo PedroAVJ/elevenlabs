@@ -1,0 +1,20 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="face" x1="116" y1="40" x2="908" y2="984" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171A24"/>
+      <stop offset="1" stop-color="#050609"/>
+    </linearGradient>
+    <linearGradient id="voice" x1="224" y1="286" x2="458" y2="652" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF9FF"/>
+      <stop offset="1" stop-color="#62C8FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#face)"/>
+  <rect x="224" y="362" width="54" height="300" rx="27" fill="url(#voice)"/>
+  <rect x="314" y="286" width="54" height="452" rx="27" fill="url(#voice)"/>
+  <rect x="404" y="372" width="54" height="280" rx="27" fill="url(#voice)"/>
+  <rect x="502" y="244" width="40" height="536" rx="20" fill="#FFFFFF"/>
+  <rect x="596" y="330" width="230" height="42" rx="21" fill="#FFFFFF"/>
+  <rect x="596" y="491" width="166" height="42" rx="21" fill="#FFFFFF" fill-opacity="0.78"/>
+  <rect x="596" y="652" width="205" height="42" rx="21" fill="#FFFFFF" fill-opacity="0.56"/>
+</svg>

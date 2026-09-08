@@ -1,0 +1,20 @@
+{
+  "name": "@pedroavj/elevenlabs",
+  "version": "0.7.37",
+  "private": true,
+  "description": "Use ElevenLabs through agent audio tools and the native Dictation Button app.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PedroAVJ/elevenlabs.git"
+  },
+  "homepage": "https://github.com/PedroAVJ/elevenlabs#readme",
+  "bugs": {
+    "url": "https://github.com/PedroAVJ/elevenlabs/issues"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:native": "swift test --package-path apps/ElevenLabs --jobs 1",
+    "sync:native-icons": "scripts/sync-native-app-icons.sh"
+  }
+}

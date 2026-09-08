@@ -1,0 +1,3611 @@
+import AVFoundation
+import Combine
+import Darwin
+import Foundation
+import UIKit
+
+enum AudioRecorderConfigurationStage: String, Equatable, Sendable {
+    case audioFormatConversion = "audio_format_conversion"
+    case audioConversionBuffer = "audio_conversion_buffer"
+    case audioInputRoute = "audio_input_route"
+    case audioEngineRestart = "audio_engine_restart"
+    case recordingStorage = "recording_storage"
+    case sessionConfiguration = "configuration"
+    case sessionActivation = "activation"
+    case audioEngineCreation = "audio_engine_creation"
+    case retryAudioEngineCreation = "retry_audio_engine_creation"
+    case retryRecordingCleanup = "retry_recording_cleanup"
+    case audioEngineStart = "audio_engine_start"
+    case audioEngineResume = "audio_engine_resume"
+    case resumeConfiguration = "resume_configuration"
+    case resumeActivation = "resume_activation"
+
+    var userFacingName: String {
+        switch self {
+        case .audioFormatConversion:
+            "audio format conversion"
+        case .audioConversionBuffer:
+            "audio conversion buffer"
+        case .audioInputRoute:
+            "audio input route"
+        case .audioEngineRestart:
+            "audio engine restart"
+        case .recordingStorage:
+            "recording storage"
+        case .sessionConfiguration:
+            "configuration"
+        case .sessionActivation:
+            "activation"
+        case .audioEngineCreation:
+            "audio engine creation"
+        case .retryAudioEngineCreation:
+            "retry audio engine creation"
+        case .retryRecordingCleanup:
+            "retry recording cleanup"
+        case .audioEngineStart:
+            "audio engine start"
+        case .audioEngineResume:
+            "audio engine resume"
+        case .resumeConfiguration:
+            "resume configuration"
+        case .resumeActivation:
+            "resume activation"
+        }
+    }
+}
+
+struct AudioRecorderConfigurationFailure: Error, Equatable, Sendable {
+    let stage: AudioRecorderConfigurationStage
+    let diagnostic: AudioSystemDiagnostic?
+}
+
+enum AudioRecorderError: LocalizedError, Equatable, Sendable {
+    case microphoneDenied
+    case alreadyRecording
+    case cancelled
+    case foregroundRequired(AudioCaptureStartError)
+    case captureStartFailed(AudioCaptureStartError)
+    case couldNotStart(stage: AudioRecorderStartStage, attempts: Int)
+    case configurationFailed(AudioRecorderConfigurationFailure)
+
+    var errorDescription: String? {
+        switch self {
+        case .microphoneDenied:
+            "Microphone access is off. Enable it for Dictation Button in Settings."
+        case .alreadyRecording:
+            "A recording is already in progress."
+        case .cancelled:
+            "Recording startup was cancelled."
+        case .foregroundRequired:
+            "Dictation Button needs to open to start the microphone."
+        case .captureStartFailed:
+            "The microphone could not start."
+        case .couldNotStart:
+            "The microphone could not start. Check whether another app is using it."
+        case let .configurationFailed(failure):
+            "Microphone \(failure.stage.userFacingName) failed."
+        }
+    }
+
+    var requiresForegroundContinuation: Bool {
+        if case .foregroundRequired = self { return true }
+        return false
+    }
+}
+
+private extension AudioRecorderError {
+    static func frameworkFailure(
+        stage: AudioRecorderConfigurationStage,
+        error: any Error
+    ) -> AudioRecorderError {
+        .configurationFailed(
+            AudioRecorderConfigurationFailure(
+                stage: stage,
+                diagnostic: AudioSystemDiagnostic(frameworkError: error)
+            )
+        )
+    }
+}
+
+private extension AudioSystemDiagnostic {
+    init(frameworkError error: any Error) {
+        let nsError = error as NSError
+        let domain: AudioSystemErrorDomain
+        switch nsError.domain {
+        case NSOSStatusErrorDomain:
+            domain = .osStatus
+        case AVFoundationErrorDomain:
+            domain = .avFoundation
+        case NSCocoaErrorDomain:
+            domain = .cocoa
+        case NSPOSIXErrorDomain:
+            domain = .posix
+        case "com.apple.coreaudio.avfaudio":
+            domain = .avfaudio
+        default:
+            domain = .other
+        }
+        self.init(domain: domain, code: nsError.code)
+    }
+}
+
+/// Apple still exposes an untyped throwing boundary here. This is the only
+/// adapter that may inspect `NSError`; all recording policy receives a concrete
+/// `AudioCaptureStartError` through Swift 6 typed throws.
+enum AudioCaptureStartErrorAdapter {
+    static func translate(_ error: any Error) -> AudioCaptureStartError {
+        let diagnostic = AudioSystemDiagnostic(frameworkError: error)
+        guard diagnostic.domain == .osStatus || diagnostic.domain == .avfaudio,
+              let code = AVAudioSession.ErrorCode(rawValue: diagnostic.code)
+        else {
+            return AudioCaptureStartError(
+                failure: .unknownCode,
+                diagnostic: diagnostic
+            )
+        }
+
+        let failure: AudioCaptureStartSystemFailure
+        switch code {
+        case .none:
+            failure = .noError
+        case .mediaServicesFailed:
+            failure = .mediaServicesFailed
+        case .isBusy:
+            failure = .busy
+        case .incompatibleCategory:
+            failure = .incompatibleCategory
+        case .cannotInterruptOthers:
+            failure = .cannotInterruptOthers
+        case .missingEntitlement:
+            failure = .missingEntitlement
+        case .siriIsRecording:
+            failure = .siriIsRecording
+        case .cannotStartPlaying:
+            failure = .cannotStartPlaying
+        case .cannotStartRecording:
+            failure = .cannotStartRecording
+        case .badParam:
+            failure = .badParameter
+        case .insufficientPriority:
+            failure = .insufficientPriority
+        case .resourceNotAvailable:
+            failure = .resourceNotAvailable
+        case .unspecified:
+            failure = .unspecified
+        case .expiredSession:
+            failure = .expiredSession
+        case .sessionNotActive:
+            failure = .sessionNotActive
+        @unknown default:
+            failure = .unknownCode
+        }
+        return AudioCaptureStartError(
+            failure: failure,
+            diagnostic: diagnostic
+        )
+    }
+}
+
+private func activateAudioSession(
+    _ session: AVAudioSession
+) throws(AudioCaptureStartError) {
+    do {
+        try session.setActive(true)
+    } catch {
+        throw AudioCaptureStartErrorAdapter.translate(error)
+    }
+}
+
+enum AudioRecorderReadiness: Equatable, Sendable {
+    case idle
+    case activating
+    case awaitingSamples
+    case ready
+}
+
+enum AudioRecorderRouteChangeReason: Equatable, Sendable {
+    case unknown
+    case newDeviceAvailable
+    case oldDeviceUnavailable
+    case categoryChange
+    case override
+    case wakeFromSleep
+    case noSuitableRoute
+    case routeConfigurationChange
+}
+
+struct AudioRecorderRouteChange: Equatable, Sendable {
+    let reason: AudioRecorderRouteChangeReason
+    let hasUsableInput: Bool
+    /// Set only when the route disappeared and ElevenLabs finalized the
+    /// partial recording instead of continuing with no usable microphone.
+    let finalizedRecordingURL: URL?
+}
+
+struct AudioMicrophoneModeSnapshot: Codable, Equatable, Sendable {
+    let preferred: String
+    let active: String
+
+    static func current() -> AudioMicrophoneModeSnapshot {
+        AudioMicrophoneModeSnapshot(
+            preferred: label(for: AVCaptureDevice.preferredMicrophoneMode),
+            active: label(for: AVCaptureDevice.activeMicrophoneMode)
+        )
+    }
+
+    private static func label(
+        for mode: AVCaptureDevice.MicrophoneMode
+    ) -> String {
+        switch mode {
+        case .standard: "standard"
+        case .wideSpectrum: "wide_spectrum"
+        case .voiceIsolation: "voice_isolation"
+        @unknown default: "unknown"
+        }
+    }
+}
+
+enum AudioRecorderEvent: Equatable, Sendable {
+    /// Interruption starts finalize the current file. Resuming into the same
+    /// file is unsafe because the audio engine may already have closed it.
+    case interruptionBegan(finalizedRecordingURL: URL?)
+    case interruptionEnded(systemSuggestedResume: Bool)
+    case routeChanged(AudioRecorderRouteChange)
+    case noAudioDetected(elapsed: TimeInterval)
+    case maximumDurationApproaching(remaining: TimeInterval)
+    /// The recorder has already been stopped and the returned file is ready to
+    /// journal before this event is delivered.
+    case maximumDurationReached(finalizedRecordingURL: URL?)
+    case recordingEndedUnexpectedly(finalizedRecordingURL: URL?)
+}
+
+struct AudioRecordingSafetyPolicy: Equatable, Sendable {
+    static let standard = AudioRecordingSafetyPolicy()
+
+    let maximumDuration: TimeInterval
+    let maximumDurationWarningLeadTime: TimeInterval
+    let noAudioWarningDelay: TimeInterval
+    let audiblePeakThresholdDecibels: Float
+
+    init(
+        maximumDuration: TimeInterval = 5 * 60,
+        maximumDurationWarningLeadTime: TimeInterval = 30,
+        noAudioWarningDelay: TimeInterval = 8,
+        audiblePeakThresholdDecibels: Float = -60
+    ) {
+        self.maximumDuration = max(1, maximumDuration)
+        self.maximumDurationWarningLeadTime = min(
+            max(0, maximumDurationWarningLeadTime),
+            self.maximumDuration
+        )
+        self.noAudioWarningDelay = max(0, noAudioWarningDelay)
+        self.audiblePeakThresholdDecibels = min(0, audiblePeakThresholdDecibels)
+    }
+}
+
+enum AudioRecordingSafetySignal: Equatable, Sendable {
+    case noAudio(elapsed: TimeInterval)
+    case maximumDurationWarning(remaining: TimeInterval)
+    case maximumDurationReached
+}
+
+/// Pure policy state kept separate from AVFoundation so the timing and
+/// exactly-once guarantees can be exercised without mocking a microphone.
+struct AudioRecordingSafetyTracker: Sendable {
+    let policy: AudioRecordingSafetyPolicy
+
+    private(set) var loudestPeakDecibels: Float = -160
+    private var didWarnAboutNoAudio = false
+    private var didWarnAboutMaximumDuration = false
+    private var didReachMaximumDuration = false
+
+    init(policy: AudioRecordingSafetyPolicy = .standard) {
+        self.policy = policy
+    }
+
+    mutating func observe(
+        elapsed: TimeInterval,
+        peakPowerDecibels: Float
+    ) -> [AudioRecordingSafetySignal] {
+        let elapsed = max(0, elapsed)
+        if peakPowerDecibels.isFinite {
+            loudestPeakDecibels = max(loudestPeakDecibels, peakPowerDecibels)
+        }
+
+        var signals: [AudioRecordingSafetySignal] = []
+        if !didWarnAboutNoAudio,
+           elapsed >= policy.noAudioWarningDelay,
+           loudestPeakDecibels < policy.audiblePeakThresholdDecibels {
+            didWarnAboutNoAudio = true
+            signals.append(.noAudio(elapsed: elapsed))
+        }
+
+        let warningTime = policy.maximumDuration
+            - policy.maximumDurationWarningLeadTime
+        if !didWarnAboutMaximumDuration,
+           elapsed >= warningTime,
+           elapsed < policy.maximumDuration {
+            didWarnAboutMaximumDuration = true
+            signals.append(
+                .maximumDurationWarning(
+                    remaining: max(0, policy.maximumDuration - elapsed)
+                )
+            )
+        }
+
+        if !didReachMaximumDuration,
+           elapsed >= policy.maximumDuration {
+            didReachMaximumDuration = true
+            signals.append(.maximumDurationReached)
+        }
+        return signals
+    }
+}
+
+private enum AudioSessionReleaseReason: String {
+    case captureEnded = "capture_ended"
+    case capturePaused = "capture_paused"
+    case failedStart = "failed_start"
+    case failedResume = "failed_resume"
+    case unexpectedEnd = "unexpected_end"
+}
+
+private enum AudioSessionActivationState: String {
+    case unknown
+    case active
+    case inactive
+}
+
+private enum AudioRecordingFileFormat: Equatable, Sendable {
+    case linearPCM
+    case mpeg4AAC
+
+    /// AVAudioFile inherits AVFoundation's Objective-C settings dictionary.
+    /// Keep that unavoidable type erasure inside this framework adapter.
+    var avFoundationSettings: [String: Any] {
+        switch self {
+        case .linearPCM:
+            [
+                AVFormatIDKey: Int(kAudioFormatLinearPCM),
+                AVSampleRateKey: 16_000,
+                AVNumberOfChannelsKey: 1,
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsBigEndianKey: false,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsNonInterleaved: false,
+            ]
+        case .mpeg4AAC:
+            [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 44_100,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+                AVEncoderBitRateKey: 96_000,
+            ]
+        }
+    }
+}
+
+/// AVAudioRecorder's `record()` reports only a Boolean and discards the audio
+/// session error that explains a rejected background start. This adapter uses
+/// AVAudioEngine's throwing `start()` boundary and writes its input tap to the
+/// same durable file formats the rest of the product already owns.
+private final class ThrowingAudioEngineRecorder: @unchecked Sendable {
+    private final class CaptureState: @unchecked Sendable {
+        private final class ConversionInput: @unchecked Sendable {
+            private let buffer: AVAudioPCMBuffer
+            private var supplied = false
+
+            init(buffer: AVAudioPCMBuffer) {
+                self.buffer = buffer
+            }
+
+            func next(
+                status: UnsafeMutablePointer<AVAudioConverterInputStatus>
+            ) -> AVAudioBuffer? {
+                guard !supplied else {
+                    status.pointee = .noDataNow
+                    return nil
+                }
+                supplied = true
+                status.pointee = .haveData
+                return buffer
+            }
+        }
+
+        struct Snapshot {
+            let duration: TimeInterval
+            let averagePower: Float
+            let peakPower: Float
+            let isAcceptingAudio: Bool
+            let writeFailed: Bool
+        }
+
+        private let lock = NSLock()
+        private var file: AVAudioFile?
+        private let converter: AVAudioConverter?
+        private let processingFormat: AVAudioFormat
+        private var writtenFrames: AVAudioFramePosition = 0
+        private var averagePower: Float = -160
+        private var peakPower: Float = -160
+        private var isAcceptingAudio = false
+        private var hasWriteFailure = false
+
+        init(
+            file: AVAudioFile,
+            inputFormat: AVAudioFormat
+        ) throws(AudioRecorderError) {
+            self.file = file
+            processingFormat = file.processingFormat
+            if inputFormat.isEqual(processingFormat) {
+                converter = nil
+            } else {
+                guard let converter = AVAudioConverter(
+                    from: inputFormat,
+                    to: processingFormat
+                ) else {
+                    throw AudioRecorderError.configurationFailed(
+                        AudioRecorderConfigurationFailure(
+                            stage: .audioFormatConversion,
+                            diagnostic: nil
+                        )
+                    )
+                }
+                converter.primeMethod = .none
+                self.converter = converter
+            }
+        }
+
+        func beginAcceptingAudio() {
+            lock.lock()
+            isAcceptingAudio = !hasWriteFailure
+            lock.unlock()
+        }
+
+        func pauseAcceptingAudio() {
+            lock.lock()
+            isAcceptingAudio = false
+            lock.unlock()
+        }
+
+        func receive(_ inputBuffer: AVAudioPCMBuffer) {
+            lock.lock()
+            defer { lock.unlock() }
+            guard isAcceptingAudio, !hasWriteFailure, let file else { return }
+
+            do {
+                let outputBuffer = try convertedBuffer(from: inputBuffer)
+                guard outputBuffer.frameLength > 0 else { return }
+                try file.write(from: outputBuffer)
+                writtenFrames += AVAudioFramePosition(outputBuffer.frameLength)
+                updateMeters(from: outputBuffer)
+            } catch {
+                hasWriteFailure = true
+                isAcceptingAudio = false
+            }
+        }
+
+        func snapshot() -> Snapshot {
+            lock.lock()
+            defer { lock.unlock() }
+            return Snapshot(
+                duration: processingFormat.sampleRate > 0
+                    ? Double(writtenFrames) / processingFormat.sampleRate
+                    : 0,
+                averagePower: averagePower,
+                peakPower: peakPower,
+                isAcceptingAudio: isAcceptingAudio,
+                writeFailed: hasWriteFailure
+            )
+        }
+
+        func close() {
+            lock.lock()
+            isAcceptingAudio = false
+            if #available(iOS 18.0, *) {
+                file?.close()
+            }
+            file = nil
+            lock.unlock()
+        }
+
+        private func convertedBuffer(
+            from inputBuffer: AVAudioPCMBuffer
+        ) throws(AudioRecorderError) -> AVAudioPCMBuffer {
+            guard let converter else { return inputBuffer }
+            let rateRatio = processingFormat.sampleRate
+                / max(1, inputBuffer.format.sampleRate)
+            let capacity = AVAudioFrameCount(
+                max(
+                    1,
+                    ceil(Double(inputBuffer.frameLength) * rateRatio) + 32
+                )
+            )
+            guard let outputBuffer = AVAudioPCMBuffer(
+                pcmFormat: processingFormat,
+                frameCapacity: capacity
+            ) else {
+                throw AudioRecorderError.configurationFailed(
+                    AudioRecorderConfigurationFailure(
+                        stage: .audioConversionBuffer,
+                        diagnostic: nil
+                    )
+                )
+            }
+
+            let conversionInput = ConversionInput(buffer: inputBuffer)
+            var conversionError: NSError?
+            let status = converter.convert(
+                to: outputBuffer,
+                error: &conversionError
+            ) { _, inputStatus in
+                conversionInput.next(status: inputStatus)
+            }
+            if status == .error {
+                let diagnostic = conversionError.map {
+                    AudioSystemDiagnostic(frameworkError: $0)
+                }
+                throw AudioRecorderError.configurationFailed(
+                    AudioRecorderConfigurationFailure(
+                        stage: .audioFormatConversion,
+                        diagnostic: diagnostic
+                    )
+                )
+            }
+            return outputBuffer
+        }
+
+        private func updateMeters(from buffer: AVAudioPCMBuffer) {
+            guard
+                let channels = buffer.floatChannelData,
+                buffer.frameLength > 0,
+                buffer.format.channelCount > 0
+            else {
+                averagePower = -160
+                peakPower = -160
+                return
+            }
+
+            let frameCount = Int(buffer.frameLength)
+            let channelCount = Int(buffer.format.channelCount)
+            var squaredSum: Double = 0
+            var absolutePeak: Float = 0
+            for channel in 0..<channelCount {
+                let samples = channels[channel]
+                for frame in 0..<frameCount {
+                    let sample = samples[frame]
+                    squaredSum += Double(sample * sample)
+                    absolutePeak = max(absolutePeak, abs(sample))
+                }
+            }
+            let sampleCount = max(1, frameCount * channelCount)
+            let rootMeanSquare = sqrt(squaredSum / Double(sampleCount))
+            averagePower = Self.decibels(amplitude: Float(rootMeanSquare))
+            peakPower = Self.decibels(amplitude: absolutePeak)
+        }
+
+        private static func decibels(amplitude: Float) -> Float {
+            guard amplitude.isFinite, amplitude > 0 else { return -160 }
+            return max(-160, min(0, 20 * log10(amplitude)))
+        }
+    }
+
+    let url: URL
+
+    private let engine = AVAudioEngine()
+    private let state: CaptureState
+    private var hasInstalledTap = false
+    private var isClosed = false
+
+    init(
+        url: URL,
+        format: AudioRecordingFileFormat,
+        creationStage: AudioRecorderConfigurationStage
+    ) throws(AudioRecorderError) {
+        self.url = url
+        let inputNode = engine.inputNode
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            throw AudioRecorderError.configurationFailed(
+                AudioRecorderConfigurationFailure(
+                    stage: .audioInputRoute,
+                    diagnostic: AudioSystemDiagnostic(
+                        domain: .avFoundation,
+                        code: Int(
+                            AVAudioSession.ErrorCode.resourceNotAvailable.rawValue
+                        )
+                    )
+                )
+            )
+        }
+
+        let file: AVAudioFile
+        do {
+            file = try AVAudioFile(
+                forWriting: url,
+                settings: format.avFoundationSettings
+            )
+        } catch {
+            throw .frameworkFailure(
+                stage: creationStage,
+                error: error
+            )
+        }
+        state = try CaptureState(file: file, inputFormat: inputFormat)
+        inputNode.installTap(
+            onBus: 0,
+            bufferSize: 4_096,
+            format: inputFormat
+        ) { [state] buffer, _ in
+            state.receive(buffer)
+        }
+        hasInstalledTap = true
+    }
+
+    deinit {
+        close()
+    }
+
+    var isRecording: Bool {
+        let snapshot = state.snapshot()
+        return engine.isRunning
+            && snapshot.isAcceptingAudio
+            && !snapshot.writeFailed
+    }
+
+    var currentTime: TimeInterval { state.snapshot().duration }
+
+    func start() throws(AudioCaptureStartError) {
+        guard !isClosed else {
+            throw AudioCaptureStartError(
+                failure: .unknownCode,
+                diagnostic: AudioSystemDiagnostic(
+                    domain: .avFoundation,
+                    code: -1
+                )
+            )
+        }
+        state.beginAcceptingAudio()
+        engine.prepare()
+        do {
+            try engine.start()
+        } catch {
+            state.pauseAcceptingAudio()
+            throw AudioCaptureStartErrorAdapter.translate(error)
+        }
+    }
+
+    func pause() {
+        state.pauseAcceptingAudio()
+        engine.pause()
+    }
+
+    func stop() {
+        close()
+    }
+
+    @discardableResult
+    func deleteRecording() -> Bool {
+        close()
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return true
+        }
+        do {
+            try FileManager.default.removeItem(at: url)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func updateMeters() {}
+
+    func averagePower(forChannel _: Int) -> Float {
+        state.snapshot().averagePower
+    }
+
+    func peakPower(forChannel _: Int) -> Float {
+        state.snapshot().peakPower
+    }
+
+    private func close() {
+        guard !isClosed else { return }
+        isClosed = true
+        state.pauseAcceptingAudio()
+        engine.stop()
+        if hasInstalledTap {
+            engine.inputNode.removeTap(onBus: 0)
+            hasInstalledTap = false
+        }
+        state.close()
+    }
+}
+
+@MainActor
+final class AudioRecorder: ObservableObject {
+    private final class NotificationToken: @unchecked Sendable {
+        let value: NSObjectProtocol
+
+        init(_ value: NSObjectProtocol) {
+            self.value = value
+        }
+    }
+
+    private struct JournalCaptureContext: @unchecked Sendable {
+        let journal: RecordingJournal
+        let capture: RecordingJournalCapture
+    }
+
+    @Published private(set) var isRecording = false
+    @Published private(set) var isPaused = false
+    @Published private(set) var duration: TimeInterval = 0
+    @Published private(set) var level: Float = 0
+    @Published private(set) var heldLevel: Float = 0
+    @Published private(set) var meterLevels: [Float] = Array(
+        repeating: 0,
+        count: 5
+    )
+    @Published private(set) var readiness: AudioRecorderReadiness = .idle
+
+    private(set) var captureQualitySummary: AudioCaptureQualitySummary = .empty
+    private(set) var microphoneModeSnapshot = AudioMicrophoneModeSnapshot.current()
+
+    let events = PassthroughSubject<AudioRecorderEvent, Never>()
+
+    var isReady: Bool { readiness == .ready }
+    var maximumDuration: TimeInterval { safetyPolicy.maximumDuration }
+
+    private let session: AVAudioSession
+    private let notificationCenter: NotificationCenter
+    private let safetyPolicy: AudioRecordingSafetyPolicy
+    private let sessionPolicy: AudioRecorderSessionPolicy
+    private let startRetryPolicy: AudioRecorderStartRetryPolicy
+    private let releaseRetryPolicy: AudioSessionReleaseRetryPolicy
+    private var safetyTracker: AudioRecordingSafetyTracker
+    private var qualityTracker = AudioCaptureQualityTracker()
+    private var voiceMeterEnvelope = VoiceMeterEnvelope()
+    private var recorder: ThrowingAudioEngineRecorder?
+    private var journalCaptureContext: JournalCaptureContext?
+    private var meterTask: Task<Void, Never>?
+    private var notificationTokens: [NotificationToken] = []
+    private var recordingStartUptime: TimeInterval?
+    private var startAttemptID: UUID?
+    private var resumeAttemptID: UUID?
+    private var audioSessionGeneration: UInt64 = 0
+    private var sessionReleaseTask: Task<Void, Never>?
+    private var otherAudioRecoveryObservationTask: Task<Void, Never>?
+    private var interruptionInProgress = false
+    private var lastStartAttemptCount = 0
+    private var otherAudioWasPlayingAtStart = false
+    private var speakerFallbackApplied = false
+    /// Shared across recorder owners (for example AppModel and DictationEngine)
+    /// so retry telemetry distinguishes the first recorder from later starts.
+    private static var hasStartedRecorderInProcess = false
+    private var audioSessionActivationState: AudioSessionActivationState = .unknown
+    private var lastCaptureObservabilitySnapshot: AudioCaptureObservabilitySnapshot?
+
+    init(
+        session: AVAudioSession = .sharedInstance(),
+        notificationCenter: NotificationCenter = .default,
+        safetyPolicy: AudioRecordingSafetyPolicy = .standard,
+        sessionPolicy: AudioRecorderSessionPolicy = .standard,
+        startRetryPolicy: AudioRecorderStartRetryPolicy = .standard,
+        releaseRetryPolicy: AudioSessionReleaseRetryPolicy = .standard
+    ) {
+        self.session = session
+        self.notificationCenter = notificationCenter
+        self.safetyPolicy = safetyPolicy
+        self.sessionPolicy = sessionPolicy
+        self.startRetryPolicy = startRetryPolicy
+        self.releaseRetryPolicy = releaseRetryPolicy
+        safetyTracker = AudioRecordingSafetyTracker(policy: safetyPolicy)
+        installAudioSessionObservers()
+    }
+
+    deinit {
+        meterTask?.cancel()
+        sessionReleaseTask?.cancel()
+        otherAudioRecoveryObservationTask?.cancel()
+        var activeRecorder = recorder
+        activeRecorder?.stop()
+        if let url = activeRecorder?.url,
+           let journalCaptureContext {
+            try? journalCaptureContext.journal.recordWriterRelease(
+                journalCaptureContext.capture,
+                finalizedURL: url
+            )
+        }
+        activeRecorder = nil
+        for token in notificationTokens {
+            notificationCenter.removeObserver(token.value)
+        }
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    func requestPermission() async -> Bool {
+        await withCheckedContinuation { continuation in
+            AVAudioApplication.requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+    }
+
+    func start() async throws(AudioRecorderError) -> URL {
+        try await start(recordingAt: nil, journalContext: nil)
+    }
+
+    /// Records directly into a destination reserved by `RecordingJournal`.
+    /// Unlike the legacy temporary-file overload, startup failures never
+    /// remove this URL: the journal remains the recovery authority until its
+    /// capture is finalized or explicitly abandoned.
+    func start(
+        recordingAt durableURL: URL
+    ) async throws(AudioRecorderError) -> URL {
+        try await start(
+            recordingAt: Optional(durableURL),
+            journalContext: nil
+        )
+    }
+
+    /// Safe journal-owned capture path. The recorder itself releases the
+    /// journal writer only after the audio engine has stopped, including
+    /// interruption, route-loss, hard-limit, and failed-start teardown paths.
+    func start(
+        capture: RecordingJournalCapture,
+        in journal: RecordingJournal
+    ) async throws(AudioRecorderError) -> URL {
+        let url: URL
+        do {
+            url = try journal.audioURL(for: capture)
+        } catch {
+            throw .frameworkFailure(
+                stage: .recordingStorage,
+                error: error
+            )
+        }
+        return try await start(
+            recordingAt: Optional(url),
+            journalContext: JournalCaptureContext(
+                journal: journal,
+                capture: capture
+            )
+        )
+    }
+
+    private func start(
+        recordingAt durableURL: URL?,
+        journalContext: JournalCaptureContext?
+    ) async throws(AudioRecorderError) -> URL {
+        guard recorder == nil, readiness == .idle else {
+            throw AudioRecorderError.alreadyRecording
+        }
+        beginAudioSessionUse()
+        let sessionGeneration = audioSessionGeneration
+        lastStartAttemptCount = 0
+        otherAudioWasPlayingAtStart = session.isOtherAudioPlaying
+        speakerFallbackApplied = false
+        lastCaptureObservabilitySnapshot = nil
+        Observability.logAudioSessionTransition(
+            stage: "before_configuration",
+            snapshot: makeCurrentObservabilitySnapshot()
+        )
+        guard !interruptionInProgress else {
+            rememberCurrentObservabilitySnapshot()
+            throw AudioRecorderError.couldNotStart(
+                stage: .interruption,
+                attempts: 0
+            )
+        }
+
+        let url: URL
+        let removesOutputAfterFailedStart: Bool
+        if let durableURL {
+            do {
+                try RecordingJournalPrivateIO.validateVacantRecordingDestination(
+                    at: durableURL
+                )
+            } catch {
+                throw .frameworkFailure(
+                    stage: .recordingStorage,
+                    error: error
+                )
+            }
+            url = durableURL
+            removesOutputAfterFailedStart = false
+        } else {
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ElevenLabs", isDirectory: true)
+            do {
+                try RecordingJournalPrivateIO.ensurePrivateDirectory(at: directory)
+            } catch {
+                throw .frameworkFailure(
+                    stage: .recordingStorage,
+                    error: error
+                )
+            }
+            url = directory.appendingPathComponent(
+                "dictation-\(UUID().uuidString).m4a"
+            )
+            removesOutputAfterFailedStart = true
+        }
+
+        let attemptID = UUID()
+        let startAttemptUptime = ProcessInfo.processInfo.systemUptime
+        startAttemptID = attemptID
+        readiness = .activating
+        duration = 0
+        level = 0
+        voiceMeterEnvelope.reset()
+        meterLevels = voiceMeterEnvelope.levels
+        safetyTracker = AudioRecordingSafetyTracker(policy: safetyPolicy)
+
+        let initialSessionConfiguration = sessionPolicy.primaryConfiguration
+        do {
+            // The user-invoked Live Activity authorizes background capture.
+            // Keep the session mixable so a headless Control Center intent can
+            // activate capture while the containing app is backgrounded.
+            // Existing media remains at its current volume during capture.
+            // A2DP leaves AirPods and other selected media outputs eligible.
+            // Bluetooth HFP is deliberately absent: allowing it lets a headset
+            // claim the input and degrade ongoing media to the hands-free route.
+            try configureSessionForRecording(initialSessionConfiguration)
+            preferBuiltInMicrophone()
+        } catch let error {
+            rememberCurrentObservabilitySnapshot()
+            resetFailedStart(attemptID: attemptID)
+            throw error
+        }
+        do {
+            try await activate(
+                session,
+                attemptID: attemptID,
+                context: "initial"
+            )
+        } catch let error {
+            rememberCurrentObservabilitySnapshot()
+            resetFailedStart(attemptID: attemptID)
+            releaseAudioSession(
+                reason: .failedStart,
+                expectedGeneration: sessionGeneration
+            )
+            throw error
+        }
+        guard startAttemptID == attemptID, readiness == .activating else {
+            rememberCurrentObservabilitySnapshot()
+            resetFailedStart(attemptID: attemptID)
+            releaseAudioSession(
+                reason: .failedStart,
+                expectedGeneration: sessionGeneration
+            )
+            throw AudioRecorderError.cancelled
+        }
+        // An inactive session can refuse a preferred input, and the built-in
+        // mic may only appear in `availableInputs` once the session is running.
+        prepareActivatedRouteForRecording()
+
+        let format: AudioRecordingFileFormat
+        if url.pathExtension.lowercased() == "wav" {
+            // Keyboard round trips retain one durable recording while Scribe
+            // Realtime tails the exact same mono PCM bytes. Batch Scribe also
+            // accepts the finalized WAVE file, so there is still one recorder,
+            // one journal owner, and one recoverable source of truth.
+            format = .linearPCM
+        } else {
+            format = .mpeg4AAC
+        }
+
+        let startResult: (recorder: ThrowingAudioEngineRecorder, attempts: Int)
+        do {
+            startResult = try await startPreparedRecorder(
+                recordingAt: url,
+                format: format,
+                attemptID: attemptID,
+                startAttemptUptime: startAttemptUptime
+            )
+            lastStartAttemptCount = startResult.attempts
+        } catch let error {
+            rememberCurrentObservabilitySnapshot()
+            releaseJournalWriter(journalContext, finalizedURL: url)
+            resetFailedStart(attemptID: attemptID)
+            releaseAudioSession(
+                reason: .failedStart,
+                expectedGeneration: sessionGeneration
+            )
+            if removesOutputAfterFailedStart {
+                _ = try? RecordingJournalPrivateIO.removeRegularFile(at: url)
+            }
+            throw error
+        }
+        let newRecorder = startResult.recorder
+        guard startAttemptID == attemptID, readiness == .activating else {
+            rememberCurrentObservabilitySnapshot()
+            newRecorder.stop()
+            releaseJournalWriter(journalContext, finalizedURL: url)
+            resetFailedStart(attemptID: attemptID)
+            releaseAudioSession(
+                reason: .failedStart,
+                expectedGeneration: sessionGeneration
+            )
+            if removesOutputAfterFailedStart {
+                _ = try? RecordingJournalPrivateIO.removeRegularFile(at: url)
+            }
+            throw AudioRecorderError.cancelled
+        }
+
+        recorder = newRecorder
+        journalCaptureContext = journalContext
+        startAttemptID = nil
+        recordingStartUptime = ProcessInfo.processInfo.systemUptime
+        readiness = .awaitingSamples
+        isPaused = false
+        isRecording = true
+        Self.hasStartedRecorderInProcess = true
+        heldLevel = 0
+        voiceMeterEnvelope.reset()
+        meterLevels = voiceMeterEnvelope.levels
+        qualityTracker = AudioCaptureQualityTracker()
+        captureQualitySummary = .empty
+        microphoneModeSnapshot = .current()
+        rememberCurrentObservabilitySnapshot()
+        startMetering()
+        return url
+    }
+
+    /// AVAudioEngine is the error-reporting boundary for microphone startup.
+    /// Background policy refusals continue in the foreground immediately;
+    /// only the typed `sessionNotActive` state receives one short route repair.
+    /// Every attempt owns a fresh engine and a vacant destination.
+    private func startPreparedRecorder(
+        recordingAt url: URL,
+        format: AudioRecordingFileFormat,
+        attemptID: UUID,
+        startAttemptUptime: TimeInterval
+    ) async throws(AudioRecorderError)
+        -> (recorder: ThrowingAudioEngineRecorder, attempts: Int) {
+        var failedAttempt = 0
+
+        while true {
+            guard startAttemptID == attemptID, readiness == .activating else {
+                throw AudioRecorderError.cancelled
+            }
+
+            let attemptCount = failedAttempt + 1
+            lastStartAttemptCount = attemptCount
+            let candidate = try ThrowingAudioEngineRecorder(
+                url: url,
+                format: format,
+                creationStage: attemptCount == 1
+                    ? .audioEngineCreation
+                    : .retryAudioEngineCreation
+            )
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: NSNumber(value: 0o600)],
+                ofItemAtPath: url.path
+            )
+
+            do {
+                try candidate.start()
+                Observability.logAudioRecorderStartAttempt(
+                    captureAttemptID: attemptID,
+                    attempt: attemptCount,
+                    elapsedMilliseconds: elapsedMilliseconds(
+                        since: startAttemptUptime
+                    ),
+                    outcome: .started,
+                    action: .none,
+                    retryDelayMilliseconds: nil,
+                    systemFailure: nil,
+                    diagnostic: nil,
+                    hadPriorSuccessfulRecorderStart:
+                        Self.hasStartedRecorderInProcess,
+                    sessionWasRecycled: false,
+                    snapshot: makeCurrentObservabilitySnapshot()
+                )
+                return (candidate, attemptCount)
+            } catch let startError {
+                candidate.stop()
+                _ = candidate.deleteRecording()
+                do {
+                    // AVAudioFile creates its container before the engine asks
+                    // iOS for hardware. Remove that header-only attempt so it
+                    // can never masquerade as recoverable speech.
+                    _ = try RecordingJournalPrivateIO.removeRegularFile(at: url)
+                } catch {
+                    throw .frameworkFailure(
+                        stage: .retryRecordingCleanup,
+                        error: error
+                    )
+                }
+
+                let decision = AudioCaptureStartFailurePolicy.decision(
+                    failure: startError.failure,
+                    applicationState: audioCaptureApplicationState(),
+                    failedAttempt: failedAttempt,
+                    retryPolicy: startRetryPolicy
+                )
+                let retryDelay: Int?
+                switch decision {
+                case .continueInForeground:
+                    retryDelay = nil
+                case let .repairRouteKeepingSessionActive(afterMilliseconds):
+                    retryDelay = afterMilliseconds
+                case .fail:
+                    retryDelay = nil
+                }
+                Observability.logAudioRecorderStartAttempt(
+                    captureAttemptID: attemptID,
+                    attempt: attemptCount,
+                    elapsedMilliseconds: elapsedMilliseconds(
+                        since: startAttemptUptime
+                    ),
+                    outcome: .engineStartFailed,
+                    action: decision.observabilityAction,
+                    retryDelayMilliseconds: retryDelay,
+                    systemFailure: startError.failure,
+                    diagnostic: startError.diagnostic,
+                    hadPriorSuccessfulRecorderStart:
+                        Self.hasStartedRecorderInProcess,
+                    sessionWasRecycled: false,
+                    snapshot: makeCurrentObservabilitySnapshot()
+                )
+
+                switch decision {
+                case .continueInForeground:
+                    throw AudioRecorderError.foregroundRequired(startError)
+                case let .repairRouteKeepingSessionActive(afterMilliseconds):
+                    prepareActivatedRouteForRecording(
+                        forceInputReassertion: true
+                    )
+                    do {
+                        try await Task.sleep(
+                            for: .milliseconds(Int64(afterMilliseconds))
+                        )
+                    } catch {
+                        throw AudioRecorderError.cancelled
+                    }
+                    prepareActivatedRouteForRecording()
+                    failedAttempt += 1
+                case .fail:
+                    throw AudioRecorderError.captureStartFailed(startError)
+                }
+            }
+        }
+    }
+
+    private func elapsedMilliseconds(since startUptime: TimeInterval) -> Int {
+        max(
+            0,
+            Int(
+                (
+                    (ProcessInfo.processInfo.systemUptime - startUptime)
+                        * 1_000
+                ).rounded()
+            )
+        )
+    }
+
+    private func audioCaptureApplicationState()
+        -> AudioCaptureApplicationState {
+        switch UIApplication.shared.applicationState {
+        case .active:
+            .active
+        case .inactive:
+            .inactive
+        case .background:
+            .background
+        @unknown default:
+            .inactive
+        }
+    }
+
+    private func configureSessionForRecording(
+        _ configuration: AudioRecorderSessionConfiguration
+    ) throws(AudioRecorderError) {
+        switch configuration {
+        case .mediaPreservingPlayAndRecord:
+            var options: AVAudioSession.CategoryOptions = []
+            if sessionPolicy.mixesWithOthers {
+                options.insert(.mixWithOthers)
+            }
+            if sessionPolicy.ducksOthers {
+                options.insert(.duckOthers)
+            }
+            if sessionPolicy.allowsBluetoothA2DPOutput {
+                options.insert(.allowBluetoothA2DP)
+            }
+            do {
+                try session.setCategory(
+                    .playAndRecord,
+                    mode: .default,
+                    options: options
+                )
+            } catch {
+                throw .frameworkFailure(
+                    stage: .sessionConfiguration,
+                    error: error
+                )
+            }
+            speakerFallbackApplied = false
+            Observability.logAudioSessionTransition(
+                stage: "configured",
+                snapshot: makeCurrentObservabilitySnapshot()
+            )
+        }
+    }
+
+    /// Reconcile input and output only after activation, when iOS has resolved
+    /// the real hardware route. A category-wide `defaultToSpeaker` option can
+    /// displace wireless headphones; this fallback touches only the receiver.
+    private func prepareActivatedRouteForRecording(
+        forceInputReassertion: Bool = false
+    ) {
+        preferBuiltInMicrophone(
+            forceReassertion: forceInputReassertion
+        )
+        applyConditionalBuiltInSpeakerFallback()
+        rememberCurrentObservabilitySnapshot()
+        Observability.logAudioSessionTransition(
+            stage: "activated",
+            snapshot: makeCurrentObservabilitySnapshot()
+        )
+    }
+
+    @discardableResult
+    private func applyConditionalBuiltInSpeakerFallback() -> Bool {
+        guard sessionPolicy.usesConditionalBuiltInSpeakerFallback else {
+            speakerFallbackApplied = false
+            return false
+        }
+
+        let route = outputRouteKind(session.currentRoute.outputs)
+        if speakerFallbackApplied, route == .speaker {
+            return true
+        }
+        guard AudioRecorderOutputRoutePolicy.shouldApplySpeakerFallback(
+            to: route
+        ) else {
+            speakerFallbackApplied = false
+            return false
+        }
+
+        do {
+            try session.overrideOutputAudioPort(.speaker)
+            speakerFallbackApplied = true
+            return true
+        } catch {
+            speakerFallbackApplied = false
+            let systemError = error as NSError
+            Observability.logAudioSpeakerFallbackFailed(
+                systemDomain: safeAudioSystemDomain(systemError.domain),
+                systemCode: systemError.code,
+                snapshot: makeCurrentObservabilitySnapshot()
+            )
+            return false
+        }
+    }
+
+    /// Pins capture to the iPhone's own microphone. Bluetooth A2DP remains
+    /// available for output, so AirPods can keep playing media without becoming
+    /// the narrowband HFP input. This also covers selectable wired or USB inputs
+    /// that iOS would otherwise prefer automatically.
+    ///
+    /// Best effort by design: a device with no usable built-in microphone must
+    /// still be able to dictate, so a refusal never fails the recording.
+    @discardableResult
+    private func preferBuiltInMicrophone(
+        forceReassertion: Bool = false
+    ) -> Bool {
+        guard let builtInMicrophone = session.availableInputs?.first(
+            where: { $0.portType == .builtInMic }
+        ) else {
+            return false
+        }
+        let preferredInputIsBuiltIn =
+            session.preferredInput?.uid == builtInMicrophone.uid
+        let currentInputIsBuiltIn = session.currentRoute.inputs.contains {
+            $0.uid == builtInMicrophone.uid
+        }
+        guard AudioRecorderInputRoutePolicy.shouldSetPreferredBuiltInInput(
+            preferredInputIsBuiltIn: preferredInputIsBuiltIn,
+            currentInputIsBuiltIn: currentInputIsBuiltIn,
+            forceReassertion: forceReassertion
+        ) else {
+            return true
+        }
+        do {
+            try session.setPreferredInput(builtInMicrophone)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func reportCaptureStarted(surface: String) {
+        let snapshot = lastCaptureObservabilitySnapshot
+            ?? makeCurrentObservabilitySnapshot()
+        Observability.logAudioCaptureStarted(
+            surface: surface,
+            snapshot: snapshot
+        )
+    }
+
+    func reportCaptureStartFailure(
+        _ error: AudioRecorderError,
+        surface: String
+    ) {
+        let snapshot = lastCaptureObservabilitySnapshot
+            ?? makeCurrentObservabilitySnapshot()
+        let descriptor = AudioRecorderFailureDescriptor(error: error)
+        Observability.captureAudioFailure(
+            surface: surface,
+            reason: descriptor.reason,
+            stage: descriptor.stage,
+            issueCode: descriptor.issueCode,
+            systemDomain: descriptor.systemDomain,
+            systemCode: descriptor.systemCode,
+            snapshot: snapshot
+        )
+    }
+
+    private func rememberCurrentObservabilitySnapshot() {
+        lastCaptureObservabilitySnapshot = makeCurrentObservabilitySnapshot()
+    }
+
+    private func makeCurrentObservabilitySnapshot() -> AudioCaptureObservabilitySnapshot {
+        let categoryOptions = session.categoryOptions
+        return AudioCaptureObservabilitySnapshot(
+            attempts: lastStartAttemptCount,
+            sessionActivationState: audioSessionActivationState.rawValue,
+            category: audioSessionCategory(session.category),
+            otherAudioWasPlayingAtStart: otherAudioWasPlayingAtStart,
+            otherAudioIsPlayingNow: session.isOtherAudioPlaying,
+            secondaryAudioShouldBeSilenced: session.secondaryAudioShouldBeSilencedHint,
+            mixingEnabled: categoryOptions.contains(.mixWithOthers)
+                || categoryOptions.contains(.duckOthers),
+            duckingEnabled: categoryOptions.contains(.duckOthers),
+            bluetoothA2DPOutputEnabled: categoryOptions.contains(.allowBluetoothA2DP),
+            defaultToSpeakerEnabled: categoryOptions.contains(.defaultToSpeaker),
+            speakerFallbackApplied: speakerFallbackApplied,
+            inputRoute: routeCategory(session.currentRoute.inputs),
+            outputRoute: routeCategory(session.currentRoute.outputs)
+        )
+    }
+
+    private func audioSessionCategory(
+        _ category: AVAudioSession.Category
+    ) -> String {
+        switch category {
+        case .ambient: "ambient"
+        case .soloAmbient: "solo_ambient"
+        case .playback: "playback"
+        case .record: "record"
+        case .playAndRecord: "play_and_record"
+        case .multiRoute: "multi_route"
+        default: "unknown"
+        }
+    }
+
+    private func outputRouteKind(
+        _ ports: [AVAudioSessionPortDescription]
+    ) -> AudioRecorderOutputRouteKind {
+        guard ports.count == 1, let port = ports.first else {
+            return ports.isEmpty ? .none : .external
+        }
+        switch port.portType {
+        case .builtInReceiver:
+            return .receiver
+        case .builtInSpeaker:
+            return .speaker
+        default:
+            return .external
+        }
+    }
+
+    private func routeCategory(
+        _ ports: [AVAudioSessionPortDescription]
+    ) -> String {
+        guard let first = ports.first else { return "none" }
+        guard ports.count == 1 else { return "multiple" }
+        // Port type describes the route class only. Never send the port name or
+        // UID because those can contain user-assigned device information.
+        return first.portType.rawValue
+    }
+
+    /// On a cold background launch, the recording grant tied to the Live
+    /// Activity the intent just started propagates asynchronously, so an
+    /// immediate `setActive` can lose the race. Retry inside one user gesture.
+    private func activate(
+        _ session: AVAudioSession,
+        attemptID: UUID,
+        context: String
+    ) async throws(AudioRecorderError) {
+        var failedAttempt = 0
+        while true {
+            guard startAttemptID == attemptID, readiness == .activating else {
+                throw AudioRecorderError.cancelled
+            }
+            do {
+                try activateAudioSession(session)
+                audioSessionActivationState = .active
+                Observability.logAudioSessionActivationAttempt(
+                    captureAttemptID: attemptID,
+                    context: context,
+                    attempt: failedAttempt + 1,
+                    outcome: "activated",
+                    retryDelayMilliseconds: nil,
+                    systemDomain: nil,
+                    systemCode: nil,
+                    snapshot: makeCurrentObservabilitySnapshot()
+                )
+                return
+            } catch let startError {
+                audioSessionActivationState = .unknown
+                let decision = AudioCaptureStartFailurePolicy.decision(
+                    failure: startError.failure,
+                    applicationState: audioCaptureApplicationState(),
+                    failedAttempt: failedAttempt,
+                    retryPolicy: startRetryPolicy
+                )
+                let delay: Int?
+                if case let .repairRouteKeepingSessionActive(
+                    afterMilliseconds
+                ) = decision {
+                    delay = afterMilliseconds
+                } else {
+                    delay = nil
+                }
+                Observability.logAudioSessionActivationAttempt(
+                    captureAttemptID: attemptID,
+                    context: context,
+                    attempt: failedAttempt + 1,
+                    outcome: delay == nil ? "failed" : "retrying",
+                    retryDelayMilliseconds: delay,
+                    systemDomain: startError.diagnostic.domain.rawValue,
+                    systemCode: startError.diagnostic.code,
+                    snapshot: makeCurrentObservabilitySnapshot()
+                )
+                switch decision {
+                case .continueInForeground:
+                    throw AudioRecorderError.foregroundRequired(startError)
+                case let .repairRouteKeepingSessionActive(afterMilliseconds):
+                    do {
+                        try await Task.sleep(
+                            for: .milliseconds(Int64(afterMilliseconds))
+                        )
+                    } catch {
+                        throw AudioRecorderError.cancelled
+                    }
+                    failedAttempt += 1
+                case .fail:
+                    throw AudioRecorderError.captureStartFailed(startError)
+                }
+            }
+        }
+    }
+
+    @discardableResult
+    func stop(deactivatesSession: Bool = true) -> URL? {
+        resumeAttemptID = nil
+        if recorder == nil {
+            startAttemptID = nil
+            readiness = .idle
+            if deactivatesSession {
+                releaseAudioSession(reason: .captureEnded)
+            }
+            return nil
+        }
+        return finishRecording(deactivatesSession: deactivatesSession)
+    }
+
+    /// Explicit in-app pause can keep the same journal-owned file open. The
+    /// keyboard Live Activity path closes its file instead and does not call
+    /// this method, because its continuation starts a fresh audio segment.
+    @discardableResult
+    func pause(deactivatesSession: Bool = true) -> Bool {
+        guard let recorder, isRecording else { return false }
+        let recorderTime = max(0, recorder.currentTime)
+        let wallTime = recordingStartUptime.map {
+            max(0, ProcessInfo.processInfo.systemUptime - $0)
+        } ?? recorderTime
+        recorder.pause()
+        meterTask?.cancel()
+        meterTask = nil
+        duration = max(duration, max(recorderTime, wallTime))
+        recordingStartUptime = nil
+        isRecording = false
+        isPaused = true
+        readiness = .ready
+        level = 0
+        if deactivatesSession {
+            releaseAudioSession(reason: .capturePaused)
+        }
+        return true
+    }
+
+    /// Restores the audio session before continuing a controlled pause. The
+    /// existing recorder and journal writer remain the sole owners of the file.
+    ///
+    /// A Live Activity intent can wake the app while another process is still
+    /// releasing audio focus. Initial capture already waits for that handoff;
+    /// Resume uses the same bounded budget so one transient activation refusal
+    /// cannot turn the control into a dead button.
+    func resume(
+        reactivatesSession: Bool = true
+    ) async throws(AudioRecorderError) {
+        if isRecording { return }
+        guard let recorder, isPaused else {
+            throw AudioRecorderError.couldNotStart(
+                stage: .recording,
+                attempts: 1
+            )
+        }
+        guard resumeAttemptID == nil else {
+            throw AudioRecorderError.alreadyRecording
+        }
+        beginAudioSessionUse()
+        let sessionGeneration = audioSessionGeneration
+
+        let attemptID = UUID()
+        resumeAttemptID = attemptID
+        readiness = .activating
+
+        if !reactivatesSession {
+            do {
+                try recorder.start()
+            } catch let startError {
+                resumeAttemptID = nil
+                readiness = .ready
+                throw AudioRecorderError.captureStartFailed(startError)
+            }
+            guard resumeAttemptID == attemptID, isPaused else {
+                recorder.pause()
+                resumeAttemptID = nil
+                readiness = .ready
+                throw AudioRecorderError.cancelled
+            }
+            completeResume()
+            return
+        }
+
+        let configuration = sessionPolicy.primaryConfiguration
+        do {
+            try configureSessionForRecording(configuration)
+        } catch let error {
+            resumeAttemptID = nil
+            readiness = .ready
+            throw error
+        }
+
+        var failedAttempt = 0
+        var hasActivatedSession = false
+        var didCompleteResume = false
+        defer {
+            if !didCompleteResume {
+                if resumeAttemptID == attemptID {
+                    resumeAttemptID = nil
+                    readiness = .ready
+                }
+                releaseAudioSession(
+                    reason: .failedResume,
+                    expectedGeneration: sessionGeneration
+                )
+            }
+        }
+
+        while true {
+            guard
+                resumeAttemptID == attemptID,
+                isPaused,
+                !Task.isCancelled
+            else {
+                throw AudioRecorderError.cancelled
+            }
+
+            if !hasActivatedSession {
+                do {
+                    try activateAudioSession(session)
+                    audioSessionActivationState = .active
+                    hasActivatedSession = true
+                } catch let startError {
+                    audioSessionActivationState = .unknown
+                    let decision = AudioCaptureStartFailurePolicy.decision(
+                        failure: startError.failure,
+                        applicationState: audioCaptureApplicationState(),
+                        failedAttempt: failedAttempt,
+                        retryPolicy: startRetryPolicy
+                    )
+                    switch decision {
+                    case .continueInForeground:
+                        throw AudioRecorderError.foregroundRequired(startError)
+                    case let .repairRouteKeepingSessionActive(
+                        afterMilliseconds
+                    ):
+                        do {
+                            try await Task.sleep(
+                                for: .milliseconds(Int64(afterMilliseconds))
+                            )
+                        } catch {
+                            throw AudioRecorderError.cancelled
+                        }
+                        failedAttempt += 1
+                        continue
+                    case .fail:
+                        throw AudioRecorderError.captureStartFailed(startError)
+                    }
+                }
+            }
+
+            prepareActivatedRouteForRecording()
+            do {
+                try recorder.start()
+                break
+            } catch let startError {
+                let decision = AudioCaptureStartFailurePolicy.decision(
+                    failure: startError.failure,
+                    applicationState: audioCaptureApplicationState(),
+                    failedAttempt: failedAttempt,
+                    retryPolicy: startRetryPolicy
+                )
+                switch decision {
+                case .continueInForeground:
+                    throw AudioRecorderError.foregroundRequired(startError)
+                case let .repairRouteKeepingSessionActive(
+                    afterMilliseconds
+                ):
+                    prepareActivatedRouteForRecording(
+                        forceInputReassertion: true
+                    )
+                    do {
+                        try await Task.sleep(
+                            for: .milliseconds(Int64(afterMilliseconds))
+                        )
+                    } catch {
+                        throw AudioRecorderError.cancelled
+                    }
+                    prepareActivatedRouteForRecording()
+                    failedAttempt += 1
+                case .fail:
+                    throw AudioRecorderError.captureStartFailed(startError)
+                }
+            }
+        }
+
+        guard resumeAttemptID == attemptID, isPaused else {
+            recorder.pause()
+            resumeAttemptID = nil
+            readiness = .ready
+            throw AudioRecorderError.cancelled
+        }
+        completeResume()
+        didCompleteResume = true
+    }
+
+    private func completeResume() {
+        recordingStartUptime =
+            ProcessInfo.processInfo.systemUptime - max(0, duration)
+        resumeAttemptID = nil
+        isPaused = false
+        isRecording = true
+        readiness = .ready
+        microphoneModeSnapshot = .current()
+        startMetering()
+    }
+
+    private func finishRecording(
+        deactivatesSession: Bool,
+        releaseReason: AudioSessionReleaseReason = .captureEnded
+    ) -> URL? {
+        meterTask?.cancel()
+        meterTask = nil
+        var activeRecorder = recorder
+        let url = activeRecorder?.url
+        let journalContext = journalCaptureContext
+        recorder = nil
+        journalCaptureContext = nil
+        activeRecorder?.stop()
+        if let url {
+            releaseJournalWriter(journalContext, finalizedURL: url)
+        }
+        // AVFoundation requires all I/O to be stopped before deactivation.
+        // Drop the final recorder reference too, so a container-finalization
+        // object cannot keep media focus alive through the release call.
+        activeRecorder = nil
+        startAttemptID = nil
+        resumeAttemptID = nil
+        recordingStartUptime = nil
+        isRecording = false
+        isPaused = false
+        readiness = .idle
+        level = 0
+        voiceMeterEnvelope.reset()
+        meterLevels = voiceMeterEnvelope.levels
+        if deactivatesSession {
+            releaseAudioSession(reason: releaseReason)
+        }
+        return url
+    }
+
+    private func beginAudioSessionUse() {
+        sessionReleaseTask?.cancel()
+        sessionReleaseTask = nil
+        otherAudioRecoveryObservationTask?.cancel()
+        otherAudioRecoveryObservationTask = nil
+        audioSessionGeneration &+= 1
+    }
+
+    private func releaseAudioSession(
+        reason: AudioSessionReleaseReason,
+        expectedGeneration: UInt64? = nil
+    ) {
+        guard expectedGeneration == nil
+            || expectedGeneration == audioSessionGeneration else {
+            return
+        }
+        sessionReleaseTask?.cancel()
+        sessionReleaseTask = nil
+        let generation = audioSessionGeneration
+        let otherAudioWasPlaying = otherAudioWasPlayingAtStart
+
+        guard !attemptAudioSessionRelease(
+            reason: reason,
+            attempt: 1,
+            otherAudioWasPlaying: otherAudioWasPlaying,
+            failureOutcome: releaseRetryPolicy.retryDelaysMilliseconds.isEmpty
+                ? "failed"
+                : "retrying"
+        ) else {
+            return
+        }
+
+        let delays = releaseRetryPolicy.retryDelaysMilliseconds
+        sessionReleaseTask = Task { [weak self] in
+            guard let self else { return }
+            for (index, delay) in delays.enumerated() {
+                do {
+                    try await Task.sleep(
+                        for: .milliseconds(Int64(delay))
+                    )
+                } catch {
+                    return
+                }
+                guard
+                    self.audioSessionGeneration == generation,
+                    self.recorder == nil
+                        || (self.isPaused && !self.isRecording),
+                    self.startAttemptID == nil,
+                    self.resumeAttemptID == nil
+                else {
+                    return
+                }
+                let isFinalAttempt = index == delays.count - 1
+                if self.attemptAudioSessionRelease(
+                    reason: reason,
+                    attempt: index + 2,
+                    otherAudioWasPlaying: otherAudioWasPlaying,
+                    failureOutcome: isFinalAttempt ? "failed" : "retrying"
+                ) {
+                    self.sessionReleaseTask = nil
+                    return
+                }
+            }
+            self.sessionReleaseTask = nil
+        }
+    }
+
+    @discardableResult
+    private func attemptAudioSessionRelease(
+        reason: AudioSessionReleaseReason,
+        attempt: Int,
+        otherAudioWasPlaying: Bool,
+        failureOutcome: String
+    ) -> Bool {
+        let snapshotBeforeRelease = makeCurrentObservabilitySnapshot()
+        do {
+            try session.setActive(
+                false,
+                options: .notifyOthersOnDeactivation
+            )
+            audioSessionActivationState = .inactive
+            let snapshotAfterRelease = makeCurrentObservabilitySnapshot()
+            Observability.logAudioSessionRelease(
+                reason: reason.rawValue,
+                outcome: "released",
+                attempt: attempt,
+                otherAudioWasPlaying: otherAudioWasPlaying,
+                outputRouteBeforeRelease: snapshotBeforeRelease.outputRoute,
+                snapshot: snapshotAfterRelease
+            )
+            scheduleOtherAudioRecoveryObservation(
+                reason: reason,
+                otherAudioWasPlaying: otherAudioWasPlaying,
+                generation: audioSessionGeneration
+            )
+            return true
+        } catch {
+            audioSessionActivationState = .unknown
+            let systemError = error as NSError
+            Observability.logAudioSessionRelease(
+                reason: reason.rawValue,
+                outcome: failureOutcome,
+                attempt: attempt,
+                otherAudioWasPlaying: otherAudioWasPlaying,
+                systemDomain: safeAudioSystemDomain(systemError.domain),
+                systemCode: systemError.code,
+                outputRouteBeforeRelease: snapshotBeforeRelease.outputRoute,
+                snapshot: makeCurrentObservabilitySnapshot()
+            )
+            return false
+        }
+    }
+
+    /// `setActive(false)` succeeding proves only that ElevenLabs released its
+    /// session. Sample the public other-audio hint after the handoff so remote
+    /// diagnostics can distinguish release success from observed reactivation.
+    private func scheduleOtherAudioRecoveryObservation(
+        reason: AudioSessionReleaseReason,
+        otherAudioWasPlaying: Bool,
+        generation: UInt64
+    ) {
+        otherAudioRecoveryObservationTask?.cancel()
+        otherAudioRecoveryObservationTask = nil
+        guard otherAudioWasPlaying else { return }
+
+        otherAudioRecoveryObservationTask = Task { [weak self] in
+            guard let self else { return }
+            var elapsedMilliseconds = 0
+            for observationMilliseconds in [250, 1_000] {
+                do {
+                    try await Task.sleep(
+                        for: .milliseconds(
+                            Int64(observationMilliseconds - elapsedMilliseconds)
+                        )
+                    )
+                } catch {
+                    return
+                }
+                elapsedMilliseconds = observationMilliseconds
+                guard
+                    self.audioSessionGeneration == generation,
+                    self.recorder == nil
+                        || (self.isPaused && !self.isRecording),
+                    self.startAttemptID == nil,
+                    self.resumeAttemptID == nil
+                else {
+                    return
+                }
+
+                let snapshot = self.makeCurrentObservabilitySnapshot()
+                Observability.logOtherAudioRecoveryObservation(
+                    reason: reason.rawValue,
+                    observationMilliseconds: observationMilliseconds,
+                    snapshot: snapshot
+                )
+                if snapshot.otherAudioIsPlayingNow {
+                    break
+                }
+            }
+            self.otherAudioRecoveryObservationTask = nil
+        }
+    }
+
+    private func safeAudioSystemDomain(_ domain: String) -> String {
+        switch domain {
+        case NSOSStatusErrorDomain:
+            "os_status"
+        case "AVFoundationErrorDomain":
+            "av_foundation"
+        case "com.apple.coreaudio.avfaudio":
+            "avfaudio"
+        case NSCocoaErrorDomain:
+            "cocoa"
+        default:
+            "other"
+        }
+    }
+
+    private func releaseJournalWriter(
+        _ context: JournalCaptureContext?,
+        finalizedURL: URL
+    ) {
+        guard let context else { return }
+        try? context.journal.recordWriterRelease(
+            context.capture,
+            finalizedURL: finalizedURL
+        )
+    }
+
+    private func resetFailedStart(attemptID: UUID) {
+        guard startAttemptID == attemptID else { return }
+        startAttemptID = nil
+        readiness = .idle
+        isRecording = false
+        isPaused = false
+        recordingStartUptime = nil
+        level = 0
+        voiceMeterEnvelope.reset()
+        meterLevels = voiceMeterEnvelope.levels
+    }
+
+    private func startMetering() {
+        meterTask?.cancel()
+        meterTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(80))
+                guard !Task.isCancelled, let self else { return }
+                self.pollRecorder()
+            }
+        }
+    }
+
+    private func pollRecorder() {
+        guard let recorder else { return }
+        guard recorder.isRecording else {
+            let url = finishRecording(
+                deactivatesSession: true,
+                releaseReason: .unexpectedEnd
+            )
+            events.send(.recordingEndedUnexpectedly(finalizedRecordingURL: url))
+            return
+        }
+
+        recorder.updateMeters()
+        let recorderTime = max(0, recorder.currentTime)
+        let wallTime = recordingStartUptime.map {
+            max(0, ProcessInfo.processInfo.systemUptime - $0)
+        } ?? recorderTime
+        let elapsed = max(recorderTime, wallTime)
+        duration = elapsed
+        if readiness == .awaitingSamples, recorderTime > 0 {
+            readiness = .ready
+        }
+
+        let averagePower = recorder.averagePower(forChannel: 0)
+        let peakPower = recorder.peakPower(forChannel: 0)
+        level = normalizedLevel(fromDecibels: averagePower)
+        heldLevel = level
+        meterLevels = voiceMeterEnvelope.observe(
+            averageLevel: level,
+            peakLevel: normalizedLevel(fromDecibels: peakPower)
+        )
+        qualityTracker.observe(
+            normalizedLevel: level,
+            averagePowerDecibels: averagePower,
+            peakPowerDecibels: peakPower
+        )
+        captureQualitySummary = qualityTracker.summary
+        microphoneModeSnapshot = .current()
+
+        for signal in safetyTracker.observe(
+            elapsed: elapsed,
+            peakPowerDecibels: peakPower
+        ) {
+            switch signal {
+            case let .noAudio(elapsed):
+                events.send(.noAudioDetected(elapsed: elapsed))
+            case let .maximumDurationWarning(remaining):
+                events.send(.maximumDurationApproaching(remaining: remaining))
+            case .maximumDurationReached:
+                let url = finishRecording(deactivatesSession: true)
+                events.send(.maximumDurationReached(finalizedRecordingURL: url))
+                return
+            }
+        }
+    }
+
+    private func normalizedLevel(fromDecibels decibels: Float) -> Float {
+        guard decibels.isFinite, decibels > -80 else { return 0 }
+        return max(0, min(1, pow(10, decibels / 40)))
+    }
+
+    private func installAudioSessionObservers() {
+        let interruptionToken = notificationCenter.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] notification in
+            let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            let optionValue = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
+            MainActor.assumeIsolated {
+                self?.handleInterruption(typeValue: typeValue, optionValue: optionValue)
+            }
+        }
+        notificationTokens.append(NotificationToken(interruptionToken))
+
+        let routeToken = notificationCenter.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] notification in
+            let reasonValue = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
+            let previousRoute = notification.userInfo?[
+                AVAudioSessionRouteChangePreviousRouteKey
+            ] as? AVAudioSessionRouteDescription
+            MainActor.assumeIsolated {
+                let previousOutputRoute = self?.routeCategory(
+                    previousRoute?.outputs ?? []
+                ) ?? "none"
+                self?.handleRouteChange(
+                    reasonValue: reasonValue,
+                    previousOutputRoute: previousOutputRoute
+                )
+            }
+        }
+        notificationTokens.append(NotificationToken(routeToken))
+    }
+
+    private func handleInterruption(typeValue: UInt?, optionValue: UInt?) {
+        guard let typeValue,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+        switch type {
+        case .began:
+            guard isRecording else { return }
+            interruptionInProgress = true
+            let url = stop(deactivatesSession: false)
+            events.send(.interruptionBegan(finalizedRecordingURL: url))
+        case .ended:
+            guard interruptionInProgress else { return }
+            interruptionInProgress = false
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionValue ?? 0)
+            events.send(
+                .interruptionEnded(systemSuggestedResume: options.contains(.shouldResume))
+            )
+        @unknown default:
+            break
+        }
+    }
+
+    private func handleRouteChange(
+        reasonValue: UInt?,
+        previousOutputRoute: String
+    ) {
+        guard isRecording else { return }
+        // A headset connected mid-sentence must not take the input away from
+        // the microphone the recording started on.
+        preferBuiltInMicrophone()
+        applyConditionalBuiltInSpeakerFallback()
+        let reason = AudioRecorderRouteChangeReason(
+            avReason: reasonValue.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:))
+        )
+        Observability.logAudioRouteChanged(
+            reason: reason.telemetryValue,
+            previousOutputRoute: previousOutputRoute,
+            snapshot: makeCurrentObservabilitySnapshot()
+        )
+        let hasUsableInput = !session.currentRoute.inputs.isEmpty
+            || !(session.availableInputs?.isEmpty ?? true)
+        let mustFinalize = !hasUsableInput
+            && (reason == .oldDeviceUnavailable || reason == .noSuitableRoute)
+        let url = mustFinalize
+            ? finishRecording(
+                deactivatesSession: true,
+                releaseReason: .unexpectedEnd
+            )
+            : nil
+        events.send(
+            .routeChanged(
+                AudioRecorderRouteChange(
+                    reason: reason,
+                    hasUsableInput: hasUsableInput,
+                    finalizedRecordingURL: url
+                )
+            )
+        )
+    }
+}
+
+extension AudioRecorderFailureDescriptor {
+    init(error: AudioRecorderError) {
+        switch error {
+        case .microphoneDenied:
+            self.init(
+                reason: "permission_denied",
+                stage: "permission",
+                issueCode: 1001,
+                systemDomain: nil,
+                systemCode: nil
+            )
+        case .alreadyRecording:
+            self.init(
+                reason: "already_recording",
+                stage: "guard",
+                issueCode: 1002,
+                systemDomain: nil,
+                systemCode: nil
+            )
+        case .cancelled:
+            self.init(
+                reason: "cancelled",
+                stage: "lifecycle",
+                issueCode: 1003,
+                systemDomain: nil,
+                systemCode: nil
+            )
+        case let .foregroundRequired(startError):
+            self.init(
+                reason: "foreground_required",
+                stage: "audio_engine_start",
+                issueCode: 1006,
+                systemDomain: startError.diagnostic.domain.rawValue,
+                systemCode: startError.diagnostic.code
+            )
+        case let .captureStartFailed(startError):
+            self.init(
+                reason: startError.failure.rawValue,
+                stage: "audio_engine_start",
+                issueCode: 1007,
+                systemDomain: startError.diagnostic.domain.rawValue,
+                systemCode: startError.diagnostic.code
+            )
+        case let .couldNotStart(stage, _):
+            self.init(
+                reason: "route_not_ready",
+                stage: stage.rawValue,
+                issueCode: 1004,
+                systemDomain: nil,
+                systemCode: nil
+            )
+        case let .configurationFailed(failure):
+            self.init(
+                reason: "configuration_failed",
+                stage: failure.stage.rawValue,
+                issueCode: 1005,
+                systemDomain: failure.diagnostic?.domain.rawValue,
+                systemCode: failure.diagnostic?.code
+            )
+        }
+    }
+}
+
+private extension AudioRecorderRouteChangeReason {
+    init(avReason: AVAudioSession.RouteChangeReason?) {
+        switch avReason {
+        case .newDeviceAvailable: self = .newDeviceAvailable
+        case .oldDeviceUnavailable: self = .oldDeviceUnavailable
+        case .categoryChange: self = .categoryChange
+        case .override: self = .override
+        case .wakeFromSleep: self = .wakeFromSleep
+        case .noSuitableRouteForCategory: self = .noSuitableRoute
+        case .routeConfigurationChange: self = .routeConfigurationChange
+        case .unknown, .none: self = .unknown
+        @unknown default: self = .unknown
+        }
+    }
+
+    var telemetryValue: String {
+        switch self {
+        case .unknown: "unknown"
+        case .newDeviceAvailable: "new_device_available"
+        case .oldDeviceUnavailable: "old_device_unavailable"
+        case .categoryChange: "category_change"
+        case .override: "override"
+        case .wakeFromSleep: "wake_from_sleep"
+        case .noSuitableRoute: "no_suitable_route"
+        case .routeConfigurationChange: "route_configuration_change"
+        }
+    }
+}
+
+struct RecordingJournalEntry: Codable, Equatable, Identifiable, Sendable {
+    let id: UUID
+    let createdAt: Date
+    let duration: TimeInterval
+    let byteCount: Int64
+    let audioFileExtension: String
+}
+
+/// Durable identity for an active capture. It intentionally stores no path;
+/// every filesystem URL is re-derived and revalidated by `RecordingJournal`.
+struct RecordingJournalCapture: Codable, Equatable, Identifiable, Sendable {
+    let id: UUID
+    let createdAt: Date
+    let audioFileExtension: String
+    /// Launch recovery must never adopt a file still being written by another
+    /// app process. A stale PID is conservative: PID reuse delays recovery but
+    /// cannot destroy or move live audio.
+    let ownerProcessIdentifier: Int32
+}
+
+enum RecordingJournalError: LocalizedError, Equatable {
+    case sourceMissing
+    case emptyRecording
+    case duplicateIdentifier
+    case recordMissing
+    case captureMissing
+    case captureContainsAudio
+    case captureWriterActive
+    case unsafeStorage
+    case corruptRecord
+
+    var errorDescription: String? {
+        switch self {
+        case .sourceMissing:
+            "The recorded audio file is no longer available."
+        case .emptyRecording:
+            "The recorded audio file is empty."
+        case .duplicateIdentifier:
+            "A recovery recording already uses that identifier."
+        case .recordMissing:
+            "The recording is no longer in the recovery journal."
+        case .captureMissing:
+            "The active recording is no longer in the recovery journal."
+        case .captureContainsAudio:
+            "The active recording contains audio and must be finalized or recovered, not abandoned."
+        case .captureWriterActive:
+            "The active recording is still owned by a recorder and cannot be recovered yet."
+        case .unsafeStorage:
+            "The recording journal contains an unsafe file or symbolic link."
+        case .corruptRecord:
+            "The recovery recording is incomplete or corrupt."
+        }
+    }
+}
+
+/// A crash-safe journal for finalized iPhone recordings.
+///
+/// Each entry is assembled and synced inside `Staging`, then its entire bundle
+/// is renamed into `Entries` in one exclusive filesystem operation. Consume
+/// and discard do the inverse: the bundle first moves atomically out of the
+/// recoverable namespace, then best-effort cleanup runs. No index points at an
+/// arbitrary path, and all owned path components reject symbolic links.
+final class RecordingJournal {
+    private struct Manifest: Codable, Equatable {
+        static let currentVersion = 1
+
+        let version: Int
+        let entry: RecordingJournalEntry
+        let audioFileName: String
+    }
+
+    private struct ActiveManifest: Codable, Equatable {
+        static let currentVersion = 1
+
+        let version: Int
+        let capture: RecordingJournalCapture
+        let audioFileName: String
+    }
+
+    private struct WriterReleaseManifest: Codable, Equatable {
+        static let currentVersion = 1
+
+        let version: Int
+        let capture: RecordingJournalCapture
+        let finalizedAudioFileName: String
+    }
+
+    private final class ReleasedCaptureRegistry: @unchecked Sendable {
+        private let lock = NSLock()
+        private var identifiers = Set<UUID>()
+
+        func insert(_ identifier: UUID) {
+            lock.lock()
+            identifiers.insert(identifier)
+            lock.unlock()
+        }
+
+        func contains(_ identifier: UUID) -> Bool {
+            lock.lock()
+            let result = identifiers.contains(identifier)
+            lock.unlock()
+            return result
+        }
+    }
+
+    private static let releasedCaptureRegistry = ReleasedCaptureRegistry()
+
+    enum Retirement: String {
+        case consumed
+        case discarded
+    }
+
+    let rootDirectory: URL
+    let entriesDirectory: URL
+    let activeDirectory: URL
+    let stagingDirectory: URL
+    let retiredDirectory: URL
+
+    private let fileManager: FileManager
+    private let bootstrapDirectories: [URL]
+
+    convenience init(fileManager: FileManager = .default) {
+        if let applicationSupport = fileManager
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first
+        {
+            self.init(
+                rootDirectory: applicationSupport
+                    .appendingPathComponent("ElevenLabs", isDirectory: true)
+                    .appendingPathComponent(
+                        "RecordingJournal",
+                        isDirectory: true
+                    ),
+                bootstrapDirectories: [applicationSupport],
+                fileManager: fileManager
+            )
+        } else {
+            // The temporary directory itself is an existing system-owned
+            // anchor. Do not chmod it; only create ElevenLabs beneath it.
+            self.init(
+                rootDirectory: fileManager.temporaryDirectory
+                    .appendingPathComponent("ElevenLabs", isDirectory: true)
+                    .appendingPathComponent(
+                        "RecordingJournal",
+                        isDirectory: true
+                    ),
+                fileManager: fileManager
+            )
+        }
+    }
+
+    init(
+        rootDirectory: URL,
+        bootstrapDirectories: [URL] = [],
+        fileManager: FileManager = .default
+    ) {
+        self.rootDirectory = rootDirectory.standardizedFileURL
+        self.bootstrapDirectories = bootstrapDirectories.map(
+            \.standardizedFileURL
+        )
+        entriesDirectory = self.rootDirectory.appendingPathComponent("Entries", isDirectory: true)
+        activeDirectory = self.rootDirectory.appendingPathComponent("Active", isDirectory: true)
+        stagingDirectory = self.rootDirectory.appendingPathComponent("Staging", isDirectory: true)
+        retiredDirectory = self.rootDirectory.appendingPathComponent("Retired", isDirectory: true)
+        self.fileManager = fileManager
+    }
+
+    /// Reserves and durably commits a private Application Support bundle before
+    /// AVFoundation is allowed to open the recording file. A force-quit can
+    /// therefore leave an active capture, never an unowned temporary file.
+    func beginCapture(
+        id: UUID = UUID(),
+        createdAt: Date = Date(),
+        audioFileExtension: String = "m4a",
+        ownerProcessIdentifier: Int32 = getpid()
+    ) throws -> RecordingJournalCapture {
+        try prepareStorage()
+        let capture = RecordingJournalCapture(
+            id: id,
+            createdAt: createdAt,
+            audioFileExtension: safeAudioExtension(audioFileExtension),
+            ownerProcessIdentifier: ownerProcessIdentifier
+        )
+        let destinationURL = activeCaptureDirectory(for: id)
+        guard !RecordingJournalPrivateIO.entryExists(at: destinationURL),
+              !RecordingJournalPrivateIO.entryExists(at: entryDirectory(for: id)) else {
+            throw RecordingJournalError.duplicateIdentifier
+        }
+
+        let stageName = "\(id.uuidString.lowercased()).active-staging-\(UUID().uuidString.lowercased())"
+        let stageURL = stagingDirectory.appendingPathComponent(stageName, isDirectory: true)
+        try RecordingJournalPrivateIO.createPrivateDirectoryExclusively(at: stageURL)
+        var didCommit = false
+        defer {
+            if !didCommit {
+                try? RecordingJournalPrivateIO.removeOwnedBundle(at: stageURL)
+            }
+        }
+
+        let activeManifest = ActiveManifest(
+            version: ActiveManifest.currentVersion,
+            capture: capture,
+            audioFileName: "audio.\(capture.audioFileExtension)"
+        )
+        try RecordingJournalPrivateIO.writeFileExclusively(
+            try encoded(activeManifest),
+            to: stageURL.appendingPathComponent("active-manifest.json")
+        )
+        try RecordingJournalPrivateIO.syncDirectory(at: stageURL)
+        do {
+            try RecordingJournalPrivateIO.renameExclusively(
+                from: stageURL,
+                to: destinationURL
+            )
+        } catch let error as NSError
+            where error.domain == NSPOSIXErrorDomain && error.code == Int(EEXIST) {
+            throw RecordingJournalError.duplicateIdentifier
+        }
+        didCommit = true
+        return capture
+    }
+
+    /// Returns the only URL the audio engine may use for this capture. Before
+    /// recording it must be absent; afterward it may be a regular single-link
+    /// file. Symbolic links and replacement directories fail closed.
+    func audioURL(for capture: RecordingJournalCapture) throws -> URL {
+        try prepareStorage()
+        let bundleURL = activeCaptureDirectory(for: capture.id)
+        guard RecordingJournalPrivateIO.entryExists(at: bundleURL) else {
+            throw RecordingJournalError.captureMissing
+        }
+        let manifest = try loadActiveManifest(
+            at: bundleURL,
+            expectedID: capture.id
+        )
+        guard manifest.capture == capture else {
+            throw RecordingJournalError.corruptRecord
+        }
+        let url = bundleURL.appendingPathComponent(manifest.audioFileName)
+        try RecordingJournalPrivateIO.validateAbsentOrRegularFile(at: url)
+        return url
+    }
+
+    /// Called only by `AudioRecorder` after it has synchronously stopped its
+    /// exact journal destination. The in-process registry closes a same-process
+    /// write-failure gap; the manifest carries that proof across journal
+    /// instances and UI/intent coordination in the surviving process.
+    fileprivate func recordWriterRelease(
+        _ capture: RecordingJournalCapture,
+        finalizedURL: URL
+    ) throws {
+        let bundleURL = activeCaptureDirectory(for: capture.id)
+        if !RecordingJournalPrivateIO.entryExists(at: bundleURL) {
+            if RecordingJournalPrivateIO.entryExists(
+                at: entryDirectory(for: capture.id)
+            ) {
+                return
+            }
+            throw RecordingJournalError.captureMissing
+        }
+        let activeManifest = try loadActiveManifest(
+            at: bundleURL,
+            expectedID: capture.id
+        )
+        guard activeManifest.capture == capture else {
+            throw RecordingJournalError.corruptRecord
+        }
+        let expectedURL = bundleURL.appendingPathComponent(
+            activeManifest.audioFileName
+        )
+        guard expectedURL.standardizedFileURL
+            == finalizedURL.standardizedFileURL else {
+            throw RecordingJournalError.corruptRecord
+        }
+
+        Self.releasedCaptureRegistry.insert(capture.id)
+        let releaseURL = bundleURL.appendingPathComponent(
+            "writer-release.json"
+        )
+        if try RecordingJournalPrivateIO.regularFileExists(at: releaseURL) {
+            let existing = try loadWriterReleaseManifest(
+                at: bundleURL,
+                expectedCapture: capture
+            )
+            guard existing.finalizedAudioFileName
+                == activeManifest.audioFileName else {
+                throw RecordingJournalError.corruptRecord
+            }
+            return
+        }
+        let release = WriterReleaseManifest(
+            version: WriterReleaseManifest.currentVersion,
+            capture: capture,
+            finalizedAudioFileName: activeManifest.audioFileName
+        )
+        try RecordingJournalPrivateIO.writeFileExclusively(
+            try encoded(release),
+            to: releaseURL
+        )
+        try RecordingJournalPrivateIO.syncDirectory(at: bundleURL)
+    }
+
+    /// Converts a stopped active capture into an ordinary recoverable entry.
+    /// The audio is synced first, the final manifest is synced second, and the
+    /// whole bundle moves into `Entries` last. If any pre-rename step fails,
+    /// the active bundle and its audio remain available for launch recovery.
+    @discardableResult
+    func finalizeCapture(
+        _ capture: RecordingJournalCapture,
+        duration: TimeInterval
+    ) throws -> RecordingJournalEntry {
+        let activeURL = activeCaptureDirectory(for: capture.id)
+        let destinationURL = entryDirectory(for: capture.id)
+
+        if !RecordingJournalPrivateIO.entryExists(at: activeURL) {
+            try prepareStorage()
+            if let loaded = try? loadBundle(at: destinationURL, expectedID: capture.id),
+               loaded.manifest.entry.createdAt == capture.createdAt,
+               loaded.manifest.entry.audioFileExtension == capture.audioFileExtension {
+                return loaded.manifest.entry
+            }
+            throw RecordingJournalError.captureMissing
+        }
+
+        let activeManifest = try loadActiveManifest(
+            at: activeURL,
+            expectedID: capture.id
+        )
+        guard activeManifest.capture == capture else {
+            throw RecordingJournalError.corruptRecord
+        }
+        guard writerWasReleased(
+            capture,
+            in: activeURL
+        ) else {
+            throw RecordingJournalError.captureWriterActive
+        }
+        try prepareStorage()
+
+        if let completed = try? loadBundle(at: activeURL, expectedID: capture.id) {
+            guard completed.manifest.entry.createdAt == capture.createdAt,
+                  completed.manifest.entry.audioFileExtension
+                    == capture.audioFileExtension else {
+                throw RecordingJournalError.corruptRecord
+            }
+            guard !RecordingJournalPrivateIO.entryExists(at: destinationURL) else {
+                throw RecordingJournalError.duplicateIdentifier
+            }
+            try RecordingJournalPrivateIO.renameExclusively(
+                from: activeURL,
+                to: destinationURL
+            )
+            return completed.manifest.entry
+        }
+
+        let audioURL = activeURL.appendingPathComponent(activeManifest.audioFileName)
+        let byteCount: Int64
+        do {
+            byteCount = try RecordingJournalPrivateIO.syncRegularFile(at: audioURL)
+        } catch let error as RecordingJournalError {
+            throw error
+        } catch let error as NSError where error.code == Int(ENOENT) {
+            throw RecordingJournalError.sourceMissing
+        }
+        guard byteCount > 0 else { throw RecordingJournalError.emptyRecording }
+
+        let entry = RecordingJournalEntry(
+            id: capture.id,
+            createdAt: capture.createdAt,
+            duration: max(0, duration),
+            byteCount: byteCount,
+            audioFileExtension: capture.audioFileExtension
+        )
+        let manifest = Manifest(
+            version: Manifest.currentVersion,
+            entry: entry,
+            audioFileName: activeManifest.audioFileName
+        )
+        try RecordingJournalPrivateIO.writeFileExclusively(
+            try encoded(manifest),
+            to: activeURL.appendingPathComponent("manifest.json")
+        )
+        try RecordingJournalPrivateIO.syncDirectory(at: activeURL)
+        guard !RecordingJournalPrivateIO.entryExists(at: destinationURL) else {
+            throw RecordingJournalError.duplicateIdentifier
+        }
+        try RecordingJournalPrivateIO.renameExclusively(
+            from: activeURL,
+            to: destinationURL
+        )
+        return entry
+    }
+
+    /// Promotes audio left in `Active` by a terminated process. Call this once
+    /// during primary launch, before a new recording begins. It is deliberately
+    /// separate from `recoverableEntries()` so foreground activation during a
+    /// live recording can never adopt the file that AVFoundation is writing.
+    @discardableResult
+    func adoptCrashLeftCaptures() throws -> [RecordingJournalEntry] {
+        try prepareStorage()
+        try recoverCompletedActiveStagingBundles()
+        let names = try fileManager.contentsOfDirectory(atPath: activeDirectory.path)
+        var adopted: [RecordingJournalEntry] = []
+        for name in names where name.hasSuffix(".recording") {
+            guard let id = Self.id(fromEntryDirectoryName: name) else { continue }
+            let activeURL = activeDirectory.appendingPathComponent(name, isDirectory: true)
+            let destinationURL = entryDirectory(for: id)
+            guard !RecordingJournalPrivateIO.entryExists(at: destinationURL) else {
+                continue
+            }
+            guard let activeManifest = try? loadActiveManifest(
+                at: activeURL,
+                expectedID: id
+            ), writerWasReleased(
+                activeManifest.capture,
+                in: activeURL
+            ) else {
+                continue
+            }
+
+            if let completed = try? loadBundle(at: activeURL, expectedID: id) {
+                do {
+                    try RecordingJournalPrivateIO.renameExclusively(
+                        from: activeURL,
+                        to: destinationURL
+                    )
+                    adopted.append(completed.manifest.entry)
+                } catch {
+                    continue
+                }
+                continue
+            }
+            let audioURL = activeURL.appendingPathComponent(activeManifest.audioFileName)
+            guard let byteCount = try? RecordingJournalPrivateIO.syncRegularFile(
+                at: audioURL
+            ), byteCount > 0 else {
+                continue
+            }
+            let entry = RecordingJournalEntry(
+                id: id,
+                createdAt: activeManifest.capture.createdAt,
+                // The previous process died before it could persist a trusted
+                // duration. Zero means unknown; it does not discard short audio.
+                duration: 0,
+                byteCount: byteCount,
+                audioFileExtension: activeManifest.capture.audioFileExtension
+            )
+            let manifest = Manifest(
+                version: Manifest.currentVersion,
+                entry: entry,
+                audioFileName: activeManifest.audioFileName
+            )
+            do {
+                try RecordingJournalPrivateIO.writeFileExclusively(
+                    try encoded(manifest),
+                    to: activeURL.appendingPathComponent("manifest.json")
+                )
+                try RecordingJournalPrivateIO.syncDirectory(at: activeURL)
+                try RecordingJournalPrivateIO.renameExclusively(
+                    from: activeURL,
+                    to: destinationURL
+                )
+                adopted.append(entry)
+            } catch {
+                // Leave Active authoritative. A later launch can retry without
+                // depending on the temporary directory or the dead process.
+                continue
+            }
+        }
+        return adopted.sorted {
+            if $0.createdAt == $1.createdAt {
+                return $0.id.uuidString < $1.id.uuidString
+            }
+            return $0.createdAt < $1.createdAt
+        }
+    }
+
+    /// Retires an empty reservation whose writer process is gone. Segmented
+    /// sessions persist the child ID before AVFoundation starts, so a kill in
+    /// that narrow window can leave a manifest pointing at a zero-byte Active
+    /// bundle. This method proves both facts before using the same conservative
+    /// abandon path as an ordinary start failure.
+    @discardableResult
+    func abandonCrashLeftEmptyCapture(id: UUID) throws -> Bool {
+        try prepareStorage()
+        let activeURL = activeCaptureDirectory(for: id)
+        guard RecordingJournalPrivateIO.entryExists(at: activeURL) else {
+            return false
+        }
+        let activeManifest = try loadActiveManifest(
+            at: activeURL,
+            expectedID: id
+        )
+        guard writerWasReleased(
+            activeManifest.capture,
+            in: activeURL
+        ) else {
+            return false
+        }
+        let audioURL = activeURL.appendingPathComponent(
+            activeManifest.audioFileName
+        )
+        if try RecordingJournalPrivateIO.regularFileExists(at: audioURL),
+           try RecordingJournalPrivateIO.regularFileByteCount(at: audioURL) > 0 {
+            return false
+        }
+        try abandonCapture(activeManifest.capture)
+        return true
+    }
+
+    /// Explicitly retires a reservation that never became useful audio. This
+    /// is the only automatic-start failure cleanup API; ordinary launch
+    /// recovery never guesses that a short active file is disposable.
+    func abandonCapture(_ capture: RecordingJournalCapture) throws {
+        try prepareStorage()
+        let sourceURL = activeCaptureDirectory(for: capture.id)
+        guard RecordingJournalPrivateIO.entryExists(at: sourceURL) else {
+            throw RecordingJournalError.captureMissing
+        }
+        let manifest = try loadActiveManifest(
+            at: sourceURL,
+            expectedID: capture.id
+        )
+        guard manifest.capture == capture else {
+            throw RecordingJournalError.corruptRecord
+        }
+        let audioURL = sourceURL.appendingPathComponent(manifest.audioFileName)
+        if try RecordingJournalPrivateIO.regularFileExists(at: audioURL),
+           try RecordingJournalPrivateIO.regularFileByteCount(at: audioURL) > 0 {
+            throw RecordingJournalError.captureContainsAudio
+        }
+        let retiredURL = retiredDirectory.appendingPathComponent(
+            "\(capture.id.uuidString.lowercased()).abandoned-\(UUID().uuidString.lowercased())",
+            isDirectory: true
+        )
+        try RecordingJournalPrivateIO.renameExclusively(
+            from: sourceURL,
+            to: retiredURL
+        )
+        try? RecordingJournalPrivateIO.removeOwnedBundle(at: retiredURL)
+    }
+
+    @discardableResult
+    func stageRecording(
+        at sourceURL: URL,
+        id: UUID = UUID(),
+        duration: TimeInterval = 0,
+        createdAt: Date = Date()
+    ) throws -> RecordingJournalEntry {
+        try prepareStorage()
+        let fileExtension = safeAudioExtension(sourceURL.pathExtension)
+        let audioFileName = "audio.\(fileExtension)"
+        let stageName = "\(id.uuidString.lowercased()).staging-\(UUID().uuidString.lowercased())"
+        let stageURL = stagingDirectory.appendingPathComponent(stageName, isDirectory: true)
+        let destinationURL = entryDirectory(for: id)
+
+        guard !RecordingJournalPrivateIO.entryExists(at: destinationURL),
+              !RecordingJournalPrivateIO.entryExists(
+                at: activeCaptureDirectory(for: id)
+              ) else {
+            throw RecordingJournalError.duplicateIdentifier
+        }
+
+        try RecordingJournalPrivateIO.createPrivateDirectoryExclusively(at: stageURL)
+        var didCommit = false
+        defer {
+            if !didCommit {
+                try? RecordingJournalPrivateIO.removeOwnedBundle(at: stageURL)
+            }
+        }
+
+        let audioURL = stageURL.appendingPathComponent(audioFileName)
+        let byteCount: Int64
+        byteCount = try RecordingJournalPrivateIO.copyRegularFile(
+            from: sourceURL,
+            to: audioURL
+        )
+        guard byteCount > 0 else { throw RecordingJournalError.emptyRecording }
+
+        let entry = RecordingJournalEntry(
+            id: id,
+            createdAt: createdAt,
+            duration: max(0, duration),
+            byteCount: byteCount,
+            audioFileExtension: fileExtension
+        )
+        let manifest = Manifest(
+            version: Manifest.currentVersion,
+            entry: entry,
+            audioFileName: audioFileName
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let manifestData = try encoder.encode(manifest)
+        try RecordingJournalPrivateIO.writeFileExclusively(
+            manifestData,
+            to: stageURL.appendingPathComponent("manifest.json")
+        )
+        try RecordingJournalPrivateIO.syncDirectory(at: stageURL)
+        do {
+            try RecordingJournalPrivateIO.renameExclusively(
+                from: stageURL,
+                to: destinationURL
+            )
+        } catch let error as NSError
+            where error.domain == NSPOSIXErrorDomain && error.code == Int(EEXIST) {
+            throw RecordingJournalError.duplicateIdentifier
+        }
+        didCommit = true
+        return entry
+    }
+
+    /// Returns oldest first so repeated recovery cannot starve an earlier
+    /// recording. Complete bundles left in Staging by a crash are promoted
+    /// before enumeration; incomplete bundles remain untouched and hidden.
+    func recoverableEntries() throws -> [RecordingJournalEntry] {
+        try prepareStorage()
+        try recoverCompletedStagingBundles()
+        let names = try fileManager.contentsOfDirectory(atPath: entriesDirectory.path)
+        var entries: [RecordingJournalEntry] = []
+        for name in names where name.hasSuffix(".recording") {
+            let bundleURL = entriesDirectory.appendingPathComponent(name, isDirectory: true)
+            guard let expectedID = Self.id(fromEntryDirectoryName: name),
+                  let loaded = try? loadBundle(at: bundleURL, expectedID: expectedID) else {
+                continue
+            }
+            entries.append(loaded.manifest.entry)
+        }
+        return entries.sorted {
+            if $0.createdAt == $1.createdAt {
+                return $0.id.uuidString < $1.id.uuidString
+            }
+            return $0.createdAt < $1.createdAt
+        }
+    }
+
+    func audioURL(for entry: RecordingJournalEntry) throws -> URL {
+        try prepareStorage()
+        let bundleURL = entryDirectory(for: entry.id)
+        guard RecordingJournalPrivateIO.entryExists(at: bundleURL) else {
+            throw RecordingJournalError.recordMissing
+        }
+        let loaded = try loadBundle(at: bundleURL, expectedID: entry.id)
+        guard loaded.manifest.entry == entry else {
+            throw RecordingJournalError.corruptRecord
+        }
+        return bundleURL.appendingPathComponent(loaded.manifest.audioFileName)
+    }
+
+    func consume(_ entry: RecordingJournalEntry) throws {
+        try retire(entry, as: .consumed)
+    }
+
+    func discard(_ entry: RecordingJournalEntry) throws {
+        try retire(entry, as: .discarded)
+    }
+
+    private func retire(
+        _ entry: RecordingJournalEntry,
+        as retirement: Retirement
+    ) throws {
+        try prepareStorage()
+        let sourceURL = entryDirectory(for: entry.id)
+        guard RecordingJournalPrivateIO.entryExists(at: sourceURL) else {
+            throw RecordingJournalError.recordMissing
+        }
+        let loaded = try loadBundle(at: sourceURL, expectedID: entry.id)
+        guard loaded.manifest.entry == entry else {
+            throw RecordingJournalError.corruptRecord
+        }
+
+        let retiredName = "\(entry.id.uuidString.lowercased()).\(retirement.rawValue)-\(UUID().uuidString.lowercased())"
+        let retiredURL = retiredDirectory.appendingPathComponent(retiredName, isDirectory: true)
+        try RecordingJournalPrivateIO.renameExclusively(from: sourceURL, to: retiredURL)
+        // Once the rename is durable, this recording cannot reappear as
+        // recoverable even if process termination interrupts physical cleanup.
+        try? RecordingJournalPrivateIO.removeOwnedBundle(at: retiredURL)
+    }
+
+    private func prepareStorage() throws {
+        do {
+            for directory in bootstrapDirectories {
+                // Explicit anchors are only allowed inside the journal's own
+                // ancestry. This keeps the bootstrap path from widening the
+                // journal's chmod/no-follow boundary to an unrelated folder.
+                guard
+                    directory.pathComponents.count
+                        < rootDirectory.pathComponents.count,
+                    rootDirectory.pathComponents.starts(
+                        with: directory.pathComponents
+                    )
+                else {
+                    throw RecordingJournalError.unsafeStorage
+                }
+                try RecordingJournalPrivateIO.ensurePrivateDirectory(
+                    at: directory
+                )
+            }
+            let parent = rootDirectory.deletingLastPathComponent()
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: parent)
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: rootDirectory)
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: entriesDirectory)
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: activeDirectory)
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: stagingDirectory)
+            try RecordingJournalPrivateIO.ensurePrivateDirectory(at: retiredDirectory)
+            try? (rootDirectory as NSURL).setResourceValue(
+                true,
+                forKey: .isExcludedFromBackupKey
+            )
+            cleanupRetiredBundles()
+        } catch {
+            throw RecordingJournalError.unsafeStorage
+        }
+    }
+
+    private func cleanupRetiredBundles() {
+        guard let names = try? fileManager.contentsOfDirectory(
+            atPath: retiredDirectory.path
+        ) else {
+            return
+        }
+        for name in names {
+            let url = retiredDirectory.appendingPathComponent(name, isDirectory: true)
+            try? RecordingJournalPrivateIO.removeOwnedBundle(at: url)
+        }
+    }
+
+    private func recoverCompletedStagingBundles() throws {
+        let names = try fileManager.contentsOfDirectory(atPath: stagingDirectory.path)
+        for name in names {
+            let stageURL = stagingDirectory.appendingPathComponent(name, isDirectory: true)
+            guard let loaded = try? loadBundle(at: stageURL, expectedID: nil) else {
+                continue
+            }
+            let destinationURL = entryDirectory(for: loaded.manifest.entry.id)
+            guard !RecordingJournalPrivateIO.entryExists(at: destinationURL) else {
+                continue
+            }
+            try? RecordingJournalPrivateIO.renameExclusively(
+                from: stageURL,
+                to: destinationURL
+            )
+        }
+    }
+
+    private func recoverCompletedActiveStagingBundles() throws {
+        let names = try fileManager.contentsOfDirectory(atPath: stagingDirectory.path)
+        for name in names where name.contains(".active-staging-") {
+            let stageURL = stagingDirectory.appendingPathComponent(name, isDirectory: true)
+            guard let activeManifest = try? loadActiveManifest(
+                at: stageURL,
+                expectedID: nil
+            ) else {
+                continue
+            }
+            guard !Self.processIsAlive(
+                activeManifest.capture.ownerProcessIdentifier
+            ) else {
+                continue
+            }
+            let destinationURL = activeCaptureDirectory(
+                for: activeManifest.capture.id
+            )
+            guard !RecordingJournalPrivateIO.entryExists(at: destinationURL),
+                  !RecordingJournalPrivateIO.entryExists(
+                    at: entryDirectory(for: activeManifest.capture.id)
+                  ) else {
+                continue
+            }
+            try? RecordingJournalPrivateIO.renameExclusively(
+                from: stageURL,
+                to: destinationURL
+            )
+        }
+    }
+
+    private func loadBundle(
+        at bundleURL: URL,
+        expectedID: UUID?
+    ) throws -> (manifest: Manifest, audioByteCount: Int64) {
+        do {
+            let manifestURL = bundleURL.appendingPathComponent("manifest.json")
+            let data = try RecordingJournalPrivateIO.readRegularFile(
+                at: manifestURL,
+                maximumByteCount: 64 * 1024
+            )
+            let manifest = try JSONDecoder().decode(Manifest.self, from: data)
+            guard manifest.version == Manifest.currentVersion,
+                  expectedID == nil || manifest.entry.id == expectedID,
+                  manifest.audioFileName == "audio.\(manifest.entry.audioFileExtension)",
+                  safeAudioExtension(manifest.entry.audioFileExtension)
+                    == manifest.entry.audioFileExtension,
+                  manifest.entry.byteCount > 0,
+                  manifest.entry.duration >= 0 else {
+                throw RecordingJournalError.corruptRecord
+            }
+            let audioURL = bundleURL.appendingPathComponent(manifest.audioFileName)
+            let byteCount = try RecordingJournalPrivateIO.regularFileByteCount(at: audioURL)
+            guard byteCount == manifest.entry.byteCount else {
+                throw RecordingJournalError.corruptRecord
+            }
+            return (manifest, byteCount)
+        } catch let error as RecordingJournalError {
+            throw error
+        } catch {
+            throw RecordingJournalError.corruptRecord
+        }
+    }
+
+    private func loadActiveManifest(
+        at bundleURL: URL,
+        expectedID: UUID?
+    ) throws -> ActiveManifest {
+        do {
+            let data = try RecordingJournalPrivateIO.readRegularFile(
+                at: bundleURL.appendingPathComponent("active-manifest.json"),
+                maximumByteCount: 64 * 1024
+            )
+            let manifest = try JSONDecoder().decode(ActiveManifest.self, from: data)
+            guard manifest.version == ActiveManifest.currentVersion,
+                  expectedID == nil || manifest.capture.id == expectedID,
+                  manifest.audioFileName
+                    == "audio.\(manifest.capture.audioFileExtension)",
+                  safeAudioExtension(manifest.capture.audioFileExtension)
+                    == manifest.capture.audioFileExtension else {
+                throw RecordingJournalError.corruptRecord
+            }
+            return manifest
+        } catch let error as RecordingJournalError {
+            throw error
+        } catch {
+            throw RecordingJournalError.corruptRecord
+        }
+    }
+
+    private func loadWriterReleaseManifest(
+        at bundleURL: URL,
+        expectedCapture: RecordingJournalCapture
+    ) throws -> WriterReleaseManifest {
+        do {
+            let data = try RecordingJournalPrivateIO.readRegularFile(
+                at: bundleURL.appendingPathComponent("writer-release.json"),
+                maximumByteCount: 64 * 1024
+            )
+            let manifest = try JSONDecoder().decode(
+                WriterReleaseManifest.self,
+                from: data
+            )
+            guard manifest.version == WriterReleaseManifest.currentVersion,
+                  manifest.capture == expectedCapture,
+                  manifest.finalizedAudioFileName
+                    == "audio.\(expectedCapture.audioFileExtension)" else {
+                throw RecordingJournalError.corruptRecord
+            }
+            return manifest
+        } catch let error as RecordingJournalError {
+            throw error
+        } catch {
+            throw RecordingJournalError.corruptRecord
+        }
+    }
+
+    private func writerWasReleased(
+        _ capture: RecordingJournalCapture,
+        in bundleURL: URL
+    ) -> Bool {
+        if Self.releasedCaptureRegistry.contains(capture.id) { return true }
+        if (try? loadWriterReleaseManifest(
+            at: bundleURL,
+            expectedCapture: capture
+        )) != nil {
+            return true
+        }
+        return !Self.processIsAlive(capture.ownerProcessIdentifier)
+    }
+
+    private func encoded<Value: Encodable>(_ value: Value) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return try encoder.encode(value)
+    }
+
+    private func entryDirectory(for id: UUID) -> URL {
+        entriesDirectory.appendingPathComponent(
+            "\(id.uuidString.lowercased()).recording",
+            isDirectory: true
+        )
+    }
+
+    private func activeCaptureDirectory(for id: UUID) -> URL {
+        activeDirectory.appendingPathComponent(
+            "\(id.uuidString.lowercased()).recording",
+            isDirectory: true
+        )
+    }
+
+    private func safeAudioExtension(_ candidate: String) -> String {
+        let normalized = candidate.lowercased()
+        return Self.audioExtensions.contains(normalized) ? normalized : "m4a"
+    }
+
+    private static func id(fromEntryDirectoryName name: String) -> UUID? {
+        guard name.hasSuffix(".recording") else { return nil }
+        return UUID(uuidString: String(name.dropLast(".recording".count)))
+    }
+
+    private static func processIsAlive(_ processIdentifier: Int32) -> Bool {
+        guard processIdentifier > 0 else { return false }
+        if kill(processIdentifier, 0) == 0 { return true }
+        // EPERM proves a process exists even if this sandbox cannot signal it.
+        return errno != ESRCH
+    }
+
+    private static let audioExtensions: Set<String> = [
+        "aac", "aif", "aiff", "caf", "flac", "m4a", "mp3", "mp4",
+        "ogg", "opus", "wav", "webm",
+    ]
+}
+
+/// Descriptor-relative filesystem operations for the iPhone recovery journal.
+/// Every final owned component is opened with `O_NOFOLLOW`, and incoming audio
+/// must be a regular, single-link file.
+private enum RecordingJournalPrivateIO {
+    private static let directoryPermissions: mode_t = 0o700
+    private static let filePermissions: mode_t = 0o600
+
+    static func ensurePrivateDirectory(at directoryURL: URL) throws {
+        var status = stat()
+        let exists = directoryURL.path.withCString { lstat($0, &status) == 0 }
+        if exists {
+            guard (status.st_mode & S_IFMT) == S_IFDIR else {
+                throw unsafeStorageError(path: directoryURL.path)
+            }
+        } else {
+            let lookupError = errno
+            guard lookupError == ENOENT else {
+                throw posixError(path: directoryURL.path, code: lookupError)
+            }
+            let parentURL = directoryURL.deletingLastPathComponent()
+            let parentFD = try openDirectory(at: parentURL, makePrivate: false)
+            defer { close(parentFD) }
+            let name = try safeBasename(of: directoryURL)
+            let result = name.withCString {
+                mkdirat(parentFD, $0, directoryPermissions)
+            }
+            if result != 0, errno != EEXIST {
+                throw posixError(path: directoryURL.path)
+            }
+            guard fsync(parentFD) == 0 else {
+                throw posixError(path: parentURL.path)
+            }
+        }
+        let descriptor = try openDirectory(at: directoryURL, makePrivate: true)
+        close(descriptor)
+    }
+
+    static func createPrivateDirectoryExclusively(at directoryURL: URL) throws {
+        let parentFD = try openDirectory(
+            at: directoryURL.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: directoryURL)
+        let result = name.withCString { mkdirat(parentFD, $0, directoryPermissions) }
+        guard result == 0 else { throw posixError(path: directoryURL.path) }
+        guard fsync(parentFD) == 0 else {
+            throw posixError(path: directoryURL.deletingLastPathComponent().path)
+        }
+    }
+
+    static func entryExists(at url: URL) -> Bool {
+        var status = stat()
+        let result = url.path.withCString { lstat($0, &status) }
+        guard result == 0 else { return false }
+        return (status.st_mode & S_IFMT) == S_IFDIR
+    }
+
+    /// The audio engine must never truncate an existing journal file. Validate
+    /// through the already-opened parent so a final-component symlink cannot
+    /// redirect capture outside the reserved bundle.
+    static func validateVacantRecordingDestination(at url: URL) throws {
+        let parentFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: url)
+        var status = stat()
+        let result = name.withCString {
+            fstatat(parentFD, $0, &status, AT_SYMLINK_NOFOLLOW)
+        }
+        if result != 0 {
+            let lookupError = errno
+            guard lookupError == ENOENT else {
+                throw posixError(path: url.path, code: lookupError)
+            }
+            return
+        }
+        guard (status.st_mode & S_IFMT) == S_IFREG,
+              status.st_nlink == 1 else {
+            throw unsafeStorageError(path: url.path)
+        }
+        throw posixError(path: url.path, code: EEXIST)
+    }
+
+    static func validateAbsentOrRegularFile(at url: URL) throws {
+        let parentFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: url)
+        var status = stat()
+        let result = name.withCString {
+            fstatat(parentFD, $0, &status, AT_SYMLINK_NOFOLLOW)
+        }
+        if result != 0 {
+            let lookupError = errno
+            guard lookupError == ENOENT else {
+                throw posixError(path: url.path, code: lookupError)
+            }
+            return
+        }
+        guard (status.st_mode & S_IFMT) == S_IFREG,
+              status.st_nlink == 1 else {
+            throw unsafeStorageError(path: url.path)
+        }
+    }
+
+    static func regularFileExists(at url: URL) throws -> Bool {
+        let parentFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: url)
+        var status = stat()
+        let result = name.withCString {
+            fstatat(parentFD, $0, &status, AT_SYMLINK_NOFOLLOW)
+        }
+        if result != 0 {
+            let lookupError = errno
+            if lookupError == ENOENT { return false }
+            throw posixError(path: url.path, code: lookupError)
+        }
+        guard (status.st_mode & S_IFMT) == S_IFREG,
+              status.st_nlink == 1 else {
+            throw unsafeStorageError(path: url.path)
+        }
+        return true
+    }
+
+    @discardableResult
+    static func copyRegularFile(from sourceURL: URL, to destinationURL: URL) throws -> Int64 {
+        let sourceFD = sourceURL.path.withCString {
+            open($0, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        }
+        guard sourceFD >= 0 else { throw RecordingJournalError.sourceMissing }
+        defer { close(sourceFD) }
+
+        var sourceStatus = stat()
+        guard fstat(sourceFD, &sourceStatus) == 0 else {
+            throw posixError(path: sourceURL.path)
+        }
+        guard (sourceStatus.st_mode & S_IFMT) == S_IFREG,
+              sourceStatus.st_nlink == 1 else {
+            throw RecordingJournalError.sourceMissing
+        }
+        guard sourceStatus.st_size > 0 else {
+            throw RecordingJournalError.emptyRecording
+        }
+
+        let destinationDirectoryFD = try openDirectory(
+            at: destinationURL.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(destinationDirectoryFD) }
+        let destinationName = try safeBasename(of: destinationURL)
+        let destinationFD = destinationName.withCString {
+            openat(
+                destinationDirectoryFD,
+                $0,
+                O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC,
+                filePermissions
+            )
+        }
+        guard destinationFD >= 0 else { throw posixError(path: destinationURL.path) }
+        var completed = false
+        defer {
+            close(destinationFD)
+            if !completed {
+                _ = destinationName.withCString {
+                    unlinkat(destinationDirectoryFD, $0, 0)
+                }
+            }
+        }
+
+        var copied: Int64 = 0
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024)
+        while true {
+            let count = buffer.withUnsafeMutableBytes {
+                read(sourceFD, $0.baseAddress, $0.count)
+            }
+            if count < 0 {
+                if errno == EINTR { continue }
+                throw posixError(path: sourceURL.path)
+            }
+            if count == 0 { break }
+            try buffer.withUnsafeBytes { bytes in
+                guard let baseAddress = bytes.baseAddress else { return }
+                var offset = 0
+                while offset < count {
+                    let written = write(
+                        destinationFD,
+                        baseAddress.advanced(by: offset),
+                        count - offset
+                    )
+                    if written < 0 {
+                        if errno == EINTR { continue }
+                        throw posixError(path: destinationURL.path)
+                    }
+                    guard written > 0 else {
+                        throw posixError(path: destinationURL.path, code: EIO)
+                    }
+                    offset += written
+                    copied += Int64(written)
+                }
+            }
+        }
+        guard copied == sourceStatus.st_size else {
+            throw posixError(path: destinationURL.path, code: EIO)
+        }
+        guard fchmod(destinationFD, filePermissions) == 0,
+              fsync(destinationFD) == 0,
+              fsync(destinationDirectoryFD) == 0 else {
+            throw posixError(path: destinationURL.path)
+        }
+        completed = true
+        return copied
+    }
+
+    static func writeFileExclusively(_ data: Data, to url: URL) throws {
+        let directoryFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(directoryFD) }
+        let name = try safeBasename(of: url)
+        let descriptor = name.withCString {
+            openat(
+                directoryFD,
+                $0,
+                O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC,
+                filePermissions
+            )
+        }
+        guard descriptor >= 0 else { throw posixError(path: url.path) }
+        var completed = false
+        defer {
+            close(descriptor)
+            if !completed {
+                _ = name.withCString { unlinkat(directoryFD, $0, 0) }
+            }
+        }
+        try data.withUnsafeBytes { bytes in
+            guard let baseAddress = bytes.baseAddress else { return }
+            var offset = 0
+            while offset < bytes.count {
+                let written = write(
+                    descriptor,
+                    baseAddress.advanced(by: offset),
+                    bytes.count - offset
+                )
+                if written < 0 {
+                    if errno == EINTR { continue }
+                    throw posixError(path: url.path)
+                }
+                guard written > 0 else {
+                    throw posixError(path: url.path, code: EIO)
+                }
+                offset += written
+            }
+        }
+        guard fchmod(descriptor, filePermissions) == 0,
+              fsync(descriptor) == 0,
+              fsync(directoryFD) == 0 else {
+            throw posixError(path: url.path)
+        }
+        completed = true
+    }
+
+    static func readRegularFile(at url: URL, maximumByteCount: Int64) throws -> Data {
+        let descriptor = try openRegularFile(at: url)
+        defer { close(descriptor) }
+        var status = stat()
+        guard fstat(descriptor, &status) == 0,
+              status.st_size >= 0,
+              status.st_size <= maximumByteCount else {
+            throw RecordingJournalError.corruptRecord
+        }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: false)
+        return try handle.readToEnd() ?? Data()
+    }
+
+    static func regularFileByteCount(at url: URL) throws -> Int64 {
+        let descriptor = try openRegularFile(at: url)
+        defer { close(descriptor) }
+        var status = stat()
+        guard fstat(descriptor, &status) == 0, status.st_size > 0 else {
+            throw RecordingJournalError.corruptRecord
+        }
+        return status.st_size
+    }
+
+    /// Flushes the audio engine's finalized file before a manifest can make it
+    /// recoverable. The descriptor is opened without following links and the
+    /// byte count comes from that same opened inode.
+    static func syncRegularFile(at url: URL) throws -> Int64 {
+        let descriptor = try openRegularFile(at: url, accessFlags: O_RDWR)
+        defer { close(descriptor) }
+        var status = stat()
+        guard fstat(descriptor, &status) == 0 else {
+            throw posixError(path: url.path)
+        }
+        guard status.st_size > 0 else {
+            throw RecordingJournalError.emptyRecording
+        }
+        guard fchmod(descriptor, filePermissions) == 0,
+              fsync(descriptor) == 0 else {
+            throw posixError(path: url.path)
+        }
+        return status.st_size
+    }
+
+    static func renameExclusively(from sourceURL: URL, to destinationURL: URL) throws {
+        let sourceParentFD = try openDirectory(
+            at: sourceURL.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(sourceParentFD) }
+        let destinationParentFD = try openDirectory(
+            at: destinationURL.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(destinationParentFD) }
+        let sourceName = try safeBasename(of: sourceURL)
+        let destinationName = try safeBasename(of: destinationURL)
+        let result = sourceName.withCString { source in
+            destinationName.withCString { destination in
+                renameatx_np(
+                    sourceParentFD,
+                    source,
+                    destinationParentFD,
+                    destination,
+                    UInt32(RENAME_EXCL)
+                )
+            }
+        }
+        guard result == 0 else { throw posixError(path: destinationURL.path) }
+        guard fsync(destinationParentFD) == 0,
+              fsync(sourceParentFD) == 0 else {
+            throw posixError(path: destinationURL.path)
+        }
+    }
+
+    static func syncDirectory(at url: URL) throws {
+        let descriptor = try openDirectory(at: url, makePrivate: true)
+        defer { close(descriptor) }
+        guard fsync(descriptor) == 0 else { throw posixError(path: url.path) }
+    }
+
+    static func removeOwnedBundle(at bundleURL: URL) throws {
+        let bundleFD = try openDirectory(at: bundleURL, makePrivate: true)
+        let knownNames = [
+            "manifest.json",
+            "active-manifest.json",
+            "writer-release.json",
+        ]
+        for name in knownNames {
+            _ = name.withCString { unlinkat(bundleFD, $0, 0) }
+        }
+
+        // The only other permitted entry is `audio.<safe extension>`. Enumerate
+        // without following it, then unlink only a regular, single-link file.
+        let duplicateFD = dup(bundleFD)
+        if duplicateFD >= 0, let stream = fdopendir(duplicateFD) {
+            while let rawEntry = readdir(stream) {
+                let name = withUnsafePointer(to: rawEntry.pointee.d_name) {
+                    $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXNAMLEN) + 1) {
+                        String(cString: $0)
+                    }
+                }
+                guard name != ".", name != "..", name.hasPrefix("audio.") else { continue }
+                var status = stat()
+                let isRegularSingleLink = name.withCString {
+                    fstatat(bundleFD, $0, &status, AT_SYMLINK_NOFOLLOW) == 0
+                } && (status.st_mode & S_IFMT) == S_IFREG && status.st_nlink == 1
+                if isRegularSingleLink {
+                    _ = name.withCString { unlinkat(bundleFD, $0, 0) }
+                }
+            }
+            closedir(stream)
+        } else if duplicateFD >= 0 {
+            close(duplicateFD)
+        }
+        _ = fsync(bundleFD)
+        close(bundleFD)
+
+        let parentFD = try openDirectory(
+            at: bundleURL.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: bundleURL)
+        let result = name.withCString { unlinkat(parentFD, $0, AT_REMOVEDIR) }
+        if result != 0, errno != ENOENT, errno != ENOTEMPTY {
+            throw posixError(path: bundleURL.path)
+        }
+        _ = fsync(parentFD)
+    }
+
+    @discardableResult
+    static func removeRegularFile(at url: URL) throws -> Bool {
+        let parentFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: false
+        )
+        defer { close(parentFD) }
+        let name = try safeBasename(of: url)
+        var status = stat()
+        let lookup = name.withCString {
+            fstatat(parentFD, $0, &status, AT_SYMLINK_NOFOLLOW)
+        }
+        if lookup != 0, errno == ENOENT { return false }
+        guard lookup == 0,
+              (status.st_mode & S_IFMT) == S_IFREG,
+              status.st_nlink == 1 else {
+            throw unsafeStorageError(path: url.path)
+        }
+        guard name.withCString({ unlinkat(parentFD, $0, 0) }) == 0 else {
+            throw posixError(path: url.path)
+        }
+        _ = fsync(parentFD)
+        return true
+    }
+
+    private static func openDirectory(at url: URL, makePrivate: Bool) throws -> Int32 {
+        let descriptor = url.path.withCString {
+            open($0, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        }
+        guard descriptor >= 0 else { throw posixError(path: url.path) }
+        var status = stat()
+        guard fstat(descriptor, &status) == 0,
+              (status.st_mode & S_IFMT) == S_IFDIR else {
+            close(descriptor)
+            throw unsafeStorageError(path: url.path)
+        }
+        if makePrivate, fchmod(descriptor, directoryPermissions) != 0 {
+            close(descriptor)
+            throw posixError(path: url.path)
+        }
+        return descriptor
+    }
+
+    private static func openRegularFile(
+        at url: URL,
+        accessFlags: Int32 = O_RDONLY
+    ) throws -> Int32 {
+        let directoryFD = try openDirectory(
+            at: url.deletingLastPathComponent(),
+            makePrivate: true
+        )
+        defer { close(directoryFD) }
+        let name = try safeBasename(of: url)
+        let descriptor = name.withCString {
+            openat(
+                directoryFD,
+                $0,
+                accessFlags | O_NOFOLLOW | O_CLOEXEC
+            )
+        }
+        guard descriptor >= 0 else { throw posixError(path: url.path) }
+        var status = stat()
+        guard fstat(descriptor, &status) == 0,
+              (status.st_mode & S_IFMT) == S_IFREG,
+              status.st_nlink == 1 else {
+            close(descriptor)
+            throw unsafeStorageError(path: url.path)
+        }
+        return descriptor
+    }
+
+    private static func safeBasename(of url: URL) throws -> String {
+        let name = url.lastPathComponent
+        guard !name.isEmpty,
+              name != ".",
+              name != "..",
+              !name.contains("/") else {
+            throw unsafeStorageError(path: url.path)
+        }
+        return name
+    }
+
+    private static func unsafeStorageError(path: String) -> NSError {
+        NSError(
+            domain: NSPOSIXErrorDomain,
+            code: Int(ELOOP),
+            userInfo: [
+                NSFilePathErrorKey: path,
+                NSLocalizedDescriptionKey: "The recording journal contains an unsafe storage boundary.",
+            ]
+        )
+    }
+
+    private static func posixError(path: String, code: Int32 = errno) -> NSError {
+        NSError(
+            domain: NSPOSIXErrorDomain,
+            code: Int(code),
+            userInfo: [NSFilePathErrorKey: path]
+        )
+    }
+}

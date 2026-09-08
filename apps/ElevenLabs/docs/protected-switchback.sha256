@@ -1,0 +1,39 @@
+# Dormant iPhone host-compatibility baseline.
+# Public-source cleanup generalized one operator-identifying AppDelegate comment;
+# executable host-compatibility code and behavior are unchanged.
+#
+# Reference inspection: Wispr Flow 1.71/build 1698, ChatGPT 1.2026.224,
+# and Claude 1.260820.0 on 2026-08-23. Automatic return was explicitly retired
+# on 2026-08-24. These files stay pinned so dormant compatibility evidence is
+# not casually rewritten or reconnected. See ios-keyboard-roundtrip-spec.md.
+# The 2026-08-24 Expo migration changed only the containing-app entry and
+# required Expo plist keys; the dormant host resolution below it was audited
+# unchanged before this baseline was advanced.
+# The 2026-08-24 live-cursor delivery decision removed only the active
+# fingerprint veto from SharedDictation and KeyboardModel. Dormant host capture,
+# resolution, catalog, and return code remain disconnected and unchanged.
+# The 2026-08-25 delivery reliability update changed the containing-app plist
+# only to follow the system appearance, and changed the active keyboard path to
+# wait for an attached document proxy, confirm the current-proxy mutation, and
+# retain/report unconfirmed delivery. Dormant host capture, resolution, catalog,
+# and return code remain disconnected and unchanged.
+# The explicit 2026-08-27 dual-channel decision changed SharedDictation and
+# KeyboardModel so a realtime draft and the quality-first batch result arbitrate
+# one insertion under the existing lock. It did not reconnect dormant host
+# capture, resolution, catalog, or automatic return.
+# The explicit 2026-08-27 Control Center state-machine decision added shared
+# Pausing and Resuming phases plus matching optimistic keyboard presentation.
+# It did not reconnect dormant host capture, resolution, catalog, or return.
+# The explicit 2026-08-28 Dictation Button rebrand changed only display copy in
+# the containing-app plist, shared delivery warning, and keyboard model. Internal
+# identifiers and dormant host capture, resolution, catalog, and return remain
+# unchanged and disconnected.
+63e0e5a5c861c45020c8b968769a0c370dd6b022cccf2b8be80da9795f100512  apps/ElevenLabs/ios/ElevenLabs/AppDelegate.swift
+23ecba761a1716044b01e90c885ce1af9f39f7a742bf7b76344cc323ce084b51  apps/ElevenLabs/ios/ElevenLabs/HostAppSwitcher.swift
+6ab5936f958e226d03a749053e9cd3348364bd1d5501bdbec180f81258ac5a9e  apps/ElevenLabs/ios/ElevenLabs/Info.plist
+04d701c73feeeefb349fddaaf6f391d6d8c425c02c2c660311a581ce91c81910  apps/ElevenLabs/ios/ElevenLabs/SharedDictation.swift
+e298f168e5f3d7b371deaff35b9994f7a5395297aa633d5e358e846f9c985a73  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationCapture.h
+a9ffb901ec0075cfc151765b09025c90a97425cac555db3727d0775630d892be  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationCapture.m
+8bcfa92cd70a5a944959f2d7ee8863ec7de6d052945a06d4615084fa97db016f  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationResolver.swift
+2ea96818559d02f1dfe6d7de935155f501775ab6bc8941adcfd07a02e097da42  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardModel.swift
+80d16281b0f457587acf33cc4cad380b244cf2956e4e528405fad1b65e387975  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardViewController.swift

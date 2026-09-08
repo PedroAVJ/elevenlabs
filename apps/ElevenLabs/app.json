@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "Dictation Button",
+    "slug": "elevenlabs",
+    "version": "1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios"
+    ],
+    "scheme": "elevenlabs",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/33e2bdea-25eb-45b1-bd39-01c332a37820",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "ios": {
+      "bundleIdentifier": "com.pedro.ElevenLabs",
+      "buildNumber": "1",
+      "appleTeamId": "KC2ZK3BWH7",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.pedro.ElevenLabs"
+        ]
+      }
+    },
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ElevenLabsKeyboard",
+                  "bundleIdentifier": "com.pedro.ElevenLabs.Keyboard",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.pedro.ElevenLabs"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "ElevenLabsLiveActivity",
+                  "bundleIdentifier": "com.pedro.ElevenLabs.LiveActivity",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.pedro.ElevenLabs"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "33e2bdea-25eb-45b1-bd39-01c332a37820"
+      }
+    }
+  }
+}

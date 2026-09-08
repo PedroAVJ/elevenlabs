@@ -1,0 +1,48 @@
+{
+  "name": "elevenlabs",
+  "version": "0.7.37",
+  "description": "Use ElevenLabs through agent audio tools and the native Dictation Button app.",
+  "author": {
+    "name": "PedroAVJ",
+    "url": "https://github.com/PedroAVJ"
+  },
+  "homepage": "https://github.com/PedroAVJ/elevenlabs",
+  "repository": "https://github.com/PedroAVJ/elevenlabs",
+  "license": "MIT",
+  "keywords": [
+    "elevenlabs",
+    "audio",
+    "speech",
+    "scribe",
+    "dictation",
+    "macos",
+    "ios",
+    "voice"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ElevenLabs",
+    "shortDescription": "Use ElevenLabs audio and dictation tools",
+    "longDescription": "Use ElevenLabs for agent-driven audio work and native macOS or iPhone dictation, including Scribe transcription with diarization, language hints, and domain-specific keyterms.",
+    "developerName": "PedroAVJ",
+    "category": "AI",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://elevenlabs.io/",
+    "privacyPolicyURL": "https://elevenlabs.io/privacy",
+    "termsOfServiceURL": "https://elevenlabs.io/terms",
+    "defaultPrompt": [
+      "Use ElevenLabs on this audio file",
+      "Transcribe this meeting with ElevenLabs Scribe",
+      "Create a diarized ElevenLabs transcript",
+      "Help me use the native Dictation Button app"
+    ],
+    "brandColor": "#111111",
+    "composerIcon": "./assets/elevenlabs-icon.png",
+    "logo": "./assets/elevenlabs-icon.png",
+    "screenshots": []
+  }
+}

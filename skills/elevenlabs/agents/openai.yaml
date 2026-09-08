@@ -1,0 +1,7 @@
+interface:
+  display_name: "ElevenLabs"
+  short_description: "Use ElevenLabs audio and dictation tools"
+  icon_small: "./assets/elevenlabs-icon.png"
+  icon_large: "./assets/elevenlabs-icon.png"
+  brand_color: "#111111"
+  default_prompt: "Use ElevenLabs for this audio or native dictation task."

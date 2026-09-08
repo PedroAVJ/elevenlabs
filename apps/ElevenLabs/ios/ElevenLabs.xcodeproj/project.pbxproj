@@ -1,0 +1,1484 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		369E1136C9A1E55D14BFBB52 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6B3D61B1310CA2589F3670ED /* PrivacyInfo.xcprivacy */; };
+		3772E599EC4B9EAB57250E2A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6B3D61B1310CA2589F3670ED /* PrivacyInfo.xcprivacy */; };
+		4B5400000000000000000001 /* KeyboardSetupStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5300000000000000000001 /* KeyboardSetupStatus.swift */; };
+		4B5400000000000000000002 /* KeyboardSetupStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5300000000000000000001 /* KeyboardSetupStatus.swift */; };
+		94017216BD85897AFD7E674A /* libPods-ElevenLabs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D2F861E911E18A09FD386A40 /* libPods-ElevenLabs.a */; };
+		9CCE425B58F67B02722D090C /* libPods-ElevenLabsTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A923429F244B842ECFB605A8 /* libPods-ElevenLabsTests.a */; };
+		A10000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AppDelegate.swift */; };
+		A10000000000000000000002 /* TranscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* TranscriptionModels.swift */; };
+		A10000000000000000000003 /* ElevenLabsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ElevenLabsClient.swift */; };
+		A10000000000000000000004 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* AudioRecorder.swift */; };
+		A10000000000000000000005 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* KeychainStore.swift */; };
+		A10000000000000000000006 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* HistoryStore.swift */; };
+		A10000000000000000000007 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* AppModel.swift */; };
+		A10000000000000000000008 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* ContentView.swift */; };
+		A10000000000000000000009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SettingsView.swift */; };
+		A1000000000000000000000A /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* HistoryView.swift */; };
+		A1000000000000000000000B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Assets.xcassets */; };
+		A1000000000000000000000C /* ElevenLabsClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* ElevenLabsClientTests.swift */; };
+		A1000000000000000000000D /* HistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* HistoryStoreTests.swift */; };
+		A1000000000000000000000E /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* XCTest.framework */; };
+		A10000000000000000000090 /* DictationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000090 /* DictationEngine.swift */; };
+		A10000000000000000000091 /* DictationIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000091 /* DictationIntents.swift */; };
+		A10000000000000000000092 /* RecordingJournalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000092 /* RecordingJournalTests.swift */; };
+		A10000000000000000000093 /* SegmentedDictationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000093 /* SegmentedDictationModel.swift */; };
+		A10000000000000000000094 /* SegmentedDictationModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000094 /* SegmentedDictationModelTests.swift */; };
+		A10000000000000000000095 /* SegmentedDictationSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000095 /* SegmentedDictationSessionStore.swift */; };
+		A10000000000000000000096 /* SegmentedDictationSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000096 /* SegmentedDictationSessionStoreTests.swift */; };
+		A10000000000000000000097 /* Observability.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000097 /* Observability.swift */; };
+		A1000000000000000000009A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A2000000000000000000009A /* Sentry */; };
+		AAE000000000000000000001 /* ElevenLabsNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAE100000000000000000001 /* ElevenLabsNative.swift */; };
+		AAE000000000000000000002 /* ElevenLabsNative.m in Sources */ = {isa = PBXBuildFile; fileRef = AAE100000000000000000002 /* ElevenLabsNative.m */; };
+		AAE000000000000000000003 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = AAE100000000000000000003 /* Expo.plist */; };
+		BCA100000000000000000001 /* AudioRecorderStartPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA200000000000000000001 /* AudioRecorderStartPolicy.swift */; };
+		BCA100000000000000000002 /* AudioRecorderStartPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA200000000000000000001 /* AudioRecorderStartPolicy.swift */; };
+		BCA100000000000000000003 /* AudioRecorderStartPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA200000000000000000002 /* AudioRecorderStartPolicyTests.swift */; };
+		BDA100000000000000000001 /* AudioDiagnosticsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA200000000000000000001 /* AudioDiagnosticsStore.swift */; };
+		C10000000000000000000001 /* SharedDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* SharedDictation.swift */; };
+		C10000000000000000000002 /* HostAppSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000002 /* HostAppSwitcher.swift */; };
+		C10000000000000000000003 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000003 /* KeyboardViewController.swift */; };
+		C10000000000000000000004 /* KeyboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000004 /* KeyboardModel.swift */; };
+		C10000000000000000000005 /* HostApplicationResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000005 /* HostApplicationResolver.swift */; };
+		C10000000000000000000006 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000006 /* KeyboardView.swift */; };
+		C10000000000000000000007 /* SharedDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* SharedDictation.swift */; };
+		C10000000000000000000008 /* ElevenLabsKeyboard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C2000000000000000000000A /* ElevenLabsKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C1000000000000000000000B /* SharedDictationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000000000000000000000B /* SharedDictationStoreTests.swift */; };
+		D10000000000000000000001 /* ElevenLabsMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000001 /* ElevenLabsMacApp.swift */; };
+		D10000000000000000000002 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* MacContentView.swift */; };
+		D10000000000000000000003 /* MacAppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000003 /* MacAppModel.swift */; };
+		D10000000000000000000004 /* MacAudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000004 /* MacAudioDevice.swift */; };
+		D10000000000000000000005 /* MacAudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000005 /* MacAudioRecorder.swift */; };
+		D10000000000000000000006 /* MacGlobalHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000006 /* MacGlobalHotKey.swift */; };
+		D10000000000000000000007 /* MacPasteController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000007 /* MacPasteController.swift */; };
+		D10000000000000000000008 /* MacReliabilityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000008 /* MacReliabilityStore.swift */; };
+		D10000000000000000000009 /* TranscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* TranscriptionModels.swift */; };
+		D1000000000000000000000A /* ElevenLabsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ElevenLabsClient.swift */; };
+		D1000000000000000000000B /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* KeychainStore.swift */; };
+		D1000000000000000000000C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Assets.xcassets */; };
+		D1000000000000000000000D /* MacStatusHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000009 /* MacStatusHUD.swift */; };
+		D1000000000000000000000E /* MacDeliveryTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000000E /* MacDeliveryTarget.swift */; };
+		D1000000000000000000000F /* MacKeyboardLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000031 /* MacKeyboardLayout.swift */; };
+		D10000000000000000000040 /* MacVocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000040 /* MacVocabularyStore.swift */; };
+		D10000000000000000000041 /* MacHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000041 /* MacHistoryStore.swift */; };
+		D10000000000000000000042 /* MacSoundEffects.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000042 /* MacSoundEffects.swift */; };
+		D10000000000000000000043 /* MacPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000043 /* MacPermissions.swift */; };
+		D10000000000000000000044 /* MacTranscriptPostProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000044 /* MacTranscriptPostProcessor.swift */; };
+		D10000000000000000000045 /* MacSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000045 /* MacSettingsView.swift */; };
+		D10000000000000000000046 /* MacDeliveryPolicyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000046 /* MacDeliveryPolicyStore.swift */; };
+		D10000000000000000000047 /* MacPendingTranscriptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000047 /* MacPendingTranscriptStore.swift */; };
+		D10000000000000000000048 /* MacDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000048 /* MacDiagnostics.swift */; };
+		D10000000000000000000049 /* MacPendingAudioStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000049 /* MacPendingAudioStore.swift */; };
+		D10000000000000000000050 /* MacPasteVerification.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000050 /* MacPasteVerification.swift */; };
+		D10000000000000000000051 /* MacDictationKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000051 /* MacDictationKeys.swift */; };
+		D10000000000000000000052 /* MacInputMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000052 /* MacInputMode.swift */; };
+		D10000000000000000000053 /* MacHUDActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000053 /* MacHUDActivity.swift */; };
+		D10000000000000000000054 /* capture-live.caf in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000054 /* capture-live.caf */; };
+		D10000000000000000000055 /* capture-released.caf in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000055 /* capture-released.caf */; };
+		D10000000000000000000056 /* delivery-verified.caf in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000056 /* delivery-verified.caf */; };
+		D10000000000000000000057 /* needs-attention.caf in Resources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000057 /* needs-attention.caf */; };
+		D10000000000000000000058 /* MacTranscriptionWorkload.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000058 /* MacTranscriptionWorkload.swift */; };
+		D1000000000000000000005D /* MacApplicationPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000005D /* MacApplicationPresence.swift */; };
+		D1000000000000000000005E /* MacKeyboardMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000005E /* MacKeyboardMap.swift */; };
+		D1000000000000000000005F /* MacKeyboardMapModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000005F /* MacKeyboardMapModel.swift */; };
+		D10000000000000000000063 /* MacVoiceIsolationProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000063 /* MacVoiceIsolationProbe.swift */; };
+		D10000000000000000000064 /* MacSingleOutputAudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000064 /* MacSingleOutputAudioRecorder.swift */; };
+		D10000000000000000000065 /* MacSoundIsolationProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000065 /* MacSoundIsolationProcessor.swift */; };
+		D10000000000000000000097 /* Observability.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000097 /* Observability.swift */; };
+		D1000000000000000000009A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = D2000000000000000000009A /* Sentry */; };
+		D100000000000000000000A1 /* typing-patter.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A1 /* typing-patter.caf */; };
+		D100000000000000000000A2 /* delivery-plop.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A2 /* delivery-plop.caf */; };
+		D100000000000000000000A3 /* wait-tick.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A3 /* wait-tick.caf */; };
+		D100000000000000000000A4 /* dictation-held.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A4 /* dictation-held.caf */; };
+		D100000000000000000000A5 /* dismiss-fold.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A5 /* dismiss-fold.caf */; };
+		D100000000000000000000A6 /* delivery-held.caf in Resources */ = {isa = PBXBuildFile; fileRef = D200000000000000000000A6 /* delivery-held.caf */; };
+		D1000000000000000000060 /* MacVoiceSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000060 /* MacVoiceSignature.swift */; };
+		D1000000000000000000061 /* MacSpeakerFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000061 /* MacSpeakerFilter.swift */; };
+		D1000000000000000000062 /* MacSpeakerProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000000000000000000062 /* MacSpeakerProfileStore.swift */; };
+		E10000000000000000000001 /* DictationActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* DictationActivityAttributes.swift */; };
+		E10000000000000000000002 /* DictationLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000002 /* DictationLiveActivity.swift */; };
+		E10000000000000000000003 /* DictationActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* DictationActivityAttributes.swift */; };
+		E10000000000000000000004 /* ElevenLabsLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000003 /* ElevenLabsLiveActivityWidget.swift */; };
+		E10000000000000000000005 /* ElevenLabsLiveActivity.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E20000000000000000000005 /* ElevenLabsLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E10000000000000000000006 /* LiveActivityControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000006 /* LiveActivityControlIntents.swift */; };
+		E10000000000000000000007 /* LiveActivityControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000006 /* LiveActivityControlIntents.swift */; };
+		E10000000000000000000008 /* LiveActivityControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000006 /* LiveActivityControlIntents.swift */; };
+		E10000000000000000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000007 /* Assets.xcassets */; };
+		E1000000000000000000000A /* SharedDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* SharedDictation.swift */; };
+		F10000000000000000000001 /* HostApplicationCapture.m in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* HostApplicationCapture.m */; };
+		F10000000000000000000101 /* MacActiveCaptureRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000101 /* MacActiveCaptureRecovery.swift */; };
+		F6A788D8842282FEA95CF8EC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB6461725798FC9000C62A9 /* ExpoModulesProvider.swift */; };
+		H10000000000000000000301 /* MacSingleInstanceLease.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000301 /* MacSingleInstanceLease.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A90000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A70000000000000000000001;
+			remoteInfo = ElevenLabs;
+		};
+		C30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A90000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C70000000000000000000001;
+			remoteInfo = ElevenLabsKeyboard;
+		};
+		E30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A90000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E70000000000000000000001;
+			remoteInfo = ElevenLabsLiveActivity;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C40000000000000000000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C10000000000000000000008 /* ElevenLabsKeyboard.appex in Embed App Extensions */,
+				E10000000000000000000005 /* ElevenLabsLiveActivity.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1AB6461725798FC9000C62A9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ElevenLabs/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4B5300000000000000000001 /* KeyboardSetupStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSetupStatus.swift; sourceTree = "<group>"; };
+		6B3D61B1310CA2589F3670ED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = ../PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A02F3DDDA77CCB670399854A /* Pods-ElevenLabs.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ElevenLabs.debug.xcconfig"; path = "Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs.debug.xcconfig"; sourceTree = "<group>"; };
+		A20000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* TranscriptionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionModels.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* ElevenLabsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsClient.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000000000000000000000C /* ElevenLabsClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsClientTests.swift; sourceTree = "<group>"; };
+		A2000000000000000000000D /* HistoryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStoreTests.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000000000000000000000F /* ElevenLabs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ElevenLabs.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000010 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		A20000000000000000000011 /* ElevenLabsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElevenLabsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000090 /* DictationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationEngine.swift; sourceTree = "<group>"; };
+		A20000000000000000000091 /* DictationIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationIntents.swift; sourceTree = "<group>"; };
+		A20000000000000000000092 /* RecordingJournalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingJournalTests.swift; sourceTree = "<group>"; };
+		A20000000000000000000093 /* SegmentedDictationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedDictationModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000094 /* SegmentedDictationModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedDictationModelTests.swift; sourceTree = "<group>"; };
+		A20000000000000000000095 /* SegmentedDictationSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedDictationSessionStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000096 /* SegmentedDictationSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedDictationSessionStoreTests.swift; sourceTree = "<group>"; };
+		A20000000000000000000097 /* Observability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observability.swift; sourceTree = "<group>"; };
+		A923429F244B842ECFB605A8 /* libPods-ElevenLabsTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ElevenLabsTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAE100000000000000000001 /* ElevenLabsNative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsNative.swift; sourceTree = "<group>"; };
+		AAE100000000000000000002 /* ElevenLabsNative.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ElevenLabsNative.m; sourceTree = "<group>"; };
+		AAE100000000000000000003 /* Expo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Expo.plist; sourceTree = "<group>"; };
+		BCA200000000000000000001 /* AudioRecorderStartPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorderStartPolicy.swift; sourceTree = "<group>"; };
+		BCA200000000000000000002 /* AudioRecorderStartPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorderStartPolicyTests.swift; sourceTree = "<group>"; };
+		BDA200000000000000000001 /* AudioDiagnosticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDiagnosticsStore.swift; sourceTree = "<group>"; };
+		C20000000000000000000001 /* SharedDictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDictation.swift; sourceTree = "<group>"; };
+		C20000000000000000000002 /* HostAppSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostAppSwitcher.swift; sourceTree = "<group>"; };
+		C20000000000000000000003 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		C20000000000000000000004 /* KeyboardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardModel.swift; sourceTree = "<group>"; };
+		C20000000000000000000005 /* HostApplicationResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostApplicationResolver.swift; sourceTree = "<group>"; };
+		C20000000000000000000006 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
+		C20000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C20000000000000000000008 /* ElevenLabsKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ElevenLabsKeyboard.entitlements; sourceTree = "<group>"; };
+		C20000000000000000000009 /* ElevenLabs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ElevenLabs.entitlements; sourceTree = "<group>"; };
+		C2000000000000000000000A /* ElevenLabsKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ElevenLabsKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2000000000000000000000B /* SharedDictationStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDictationStoreTests.swift; sourceTree = "<group>"; };
+		C446B9D5B79A7F10C09A6D4B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ElevenLabsTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		D20000000000000000000001 /* ElevenLabsMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsMacApp.swift; sourceTree = "<group>"; };
+		D20000000000000000000002 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
+		D20000000000000000000003 /* MacAppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppModel.swift; sourceTree = "<group>"; };
+		D20000000000000000000004 /* MacAudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAudioDevice.swift; sourceTree = "<group>"; };
+		D20000000000000000000005 /* MacAudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAudioRecorder.swift; sourceTree = "<group>"; };
+		D20000000000000000000006 /* MacGlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGlobalHotKey.swift; sourceTree = "<group>"; };
+		D20000000000000000000007 /* MacPasteController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPasteController.swift; sourceTree = "<group>"; };
+		D20000000000000000000008 /* MacReliabilityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacReliabilityStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000009 /* MacStatusHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacStatusHUD.swift; sourceTree = "<group>"; };
+		D2000000000000000000000E /* MacDeliveryTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDeliveryTarget.swift; sourceTree = "<group>"; };
+		D2000000000000000000000F /* ElevenLabs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ElevenLabs.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D20000000000000000000031 /* MacKeyboardLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacKeyboardLayout.swift; sourceTree = "<group>"; };
+		D20000000000000000000040 /* MacVocabularyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVocabularyStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000041 /* MacHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacHistoryStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000042 /* MacSoundEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSoundEffects.swift; sourceTree = "<group>"; };
+		D20000000000000000000043 /* MacPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPermissions.swift; sourceTree = "<group>"; };
+		D20000000000000000000044 /* MacTranscriptPostProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacTranscriptPostProcessor.swift; sourceTree = "<group>"; };
+		D20000000000000000000045 /* MacSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSettingsView.swift; sourceTree = "<group>"; };
+		D20000000000000000000046 /* MacDeliveryPolicyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDeliveryPolicyStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000047 /* MacPendingTranscriptStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPendingTranscriptStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000048 /* MacDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDiagnostics.swift; sourceTree = "<group>"; };
+		D20000000000000000000049 /* MacPendingAudioStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPendingAudioStore.swift; sourceTree = "<group>"; };
+		D20000000000000000000050 /* MacPasteVerification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPasteVerification.swift; sourceTree = "<group>"; };
+		D20000000000000000000051 /* MacDictationKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDictationKeys.swift; sourceTree = "<group>"; };
+		D20000000000000000000052 /* MacInputMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacInputMode.swift; sourceTree = "<group>"; };
+		D20000000000000000000053 /* MacHUDActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacHUDActivity.swift; sourceTree = "<group>"; };
+		D20000000000000000000054 /* capture-live.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "capture-live.caf"; sourceTree = "<group>"; };
+		D20000000000000000000055 /* capture-released.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "capture-released.caf"; sourceTree = "<group>"; };
+		D20000000000000000000056 /* delivery-verified.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "delivery-verified.caf"; sourceTree = "<group>"; };
+		D20000000000000000000057 /* needs-attention.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "needs-attention.caf"; sourceTree = "<group>"; };
+		D20000000000000000000058 /* MacTranscriptionWorkload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacTranscriptionWorkload.swift; sourceTree = "<group>"; };
+		D2000000000000000000005D /* MacApplicationPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacApplicationPresence.swift; sourceTree = "<group>"; };
+		D2000000000000000000005E /* MacKeyboardMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacKeyboardMap.swift; sourceTree = "<group>"; };
+		D2000000000000000000005F /* MacKeyboardMapModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacKeyboardMapModel.swift; sourceTree = "<group>"; };
+		D20000000000000000000063 /* MacVoiceIsolationProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVoiceIsolationProbe.swift; sourceTree = "<group>"; };
+		D20000000000000000000064 /* MacSingleOutputAudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSingleOutputAudioRecorder.swift; sourceTree = "<group>"; };
+		D20000000000000000000065 /* MacSoundIsolationProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSoundIsolationProcessor.swift; sourceTree = "<group>"; };
+		D200000000000000000000A1 /* typing-patter.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "typing-patter.caf"; sourceTree = "<group>"; };
+		D200000000000000000000A2 /* delivery-plop.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "delivery-plop.caf"; sourceTree = "<group>"; };
+		D200000000000000000000A3 /* wait-tick.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "wait-tick.caf"; sourceTree = "<group>"; };
+		D200000000000000000000A4 /* dictation-held.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "dictation-held.caf"; sourceTree = "<group>"; };
+		D200000000000000000000A5 /* dismiss-fold.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "dismiss-fold.caf"; sourceTree = "<group>"; };
+		D200000000000000000000A6 /* delivery-held.caf */ = {isa = PBXFileReference; lastKnownFileType = audio.caf; path = "delivery-held.caf"; sourceTree = "<group>"; };
+		D2000000000000000000060 /* MacVoiceSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVoiceSignature.swift; sourceTree = "<group>"; };
+		D2000000000000000000061 /* MacSpeakerFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSpeakerFilter.swift; sourceTree = "<group>"; };
+		D2000000000000000000062 /* MacSpeakerProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSpeakerProfileStore.swift; sourceTree = "<group>"; };
+		D2F861E911E18A09FD386A40 /* libPods-ElevenLabs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ElevenLabs.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D961BF3836C4614AC654B8EE /* Pods-ElevenLabsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ElevenLabsTests.debug.xcconfig"; path = "Target Support Files/Pods-ElevenLabsTests/Pods-ElevenLabsTests.debug.xcconfig"; sourceTree = "<group>"; };
+		DD908ECD91B60FC457890A27 /* Pods-ElevenLabsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ElevenLabsTests.release.xcconfig"; path = "Target Support Files/Pods-ElevenLabsTests/Pods-ElevenLabsTests.release.xcconfig"; sourceTree = "<group>"; };
+		E20000000000000000000001 /* DictationActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationActivityAttributes.swift; sourceTree = "<group>"; };
+		E20000000000000000000002 /* DictationLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationLiveActivity.swift; sourceTree = "<group>"; };
+		E20000000000000000000003 /* ElevenLabsLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsLiveActivityWidget.swift; sourceTree = "<group>"; };
+		E20000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E20000000000000000000005 /* ElevenLabsLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ElevenLabsLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E20000000000000000000006 /* LiveActivityControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityControlIntents.swift; sourceTree = "<group>"; };
+		E20000000000000000000007 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E20000000000000000000008 /* ElevenLabsLiveActivity.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ElevenLabsLiveActivity.entitlements; sourceTree = "<group>"; };
+		EBCC528245EAC5209DA00DAD /* Pods-ElevenLabs.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ElevenLabs.release.xcconfig"; path = "Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs.release.xcconfig"; sourceTree = "<group>"; };
+		F20000000000000000000001 /* HostApplicationCapture.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HostApplicationCapture.m; sourceTree = "<group>"; };
+		F20000000000000000000002 /* HostApplicationCapture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HostApplicationCapture.h; sourceTree = "<group>"; };
+		F20000000000000000000003 /* ElevenLabsKeyboard-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ElevenLabsKeyboard-Bridging-Header.h"; sourceTree = "<group>"; };
+		F20000000000000000000004 /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
+		F20000000000000000000101 /* MacActiveCaptureRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacActiveCaptureRecovery.swift; sourceTree = "<group>"; };
+		H20000000000000000000301 /* MacSingleInstanceLease.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSingleInstanceLease.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A40000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000009A /* Sentry in Frameworks */,
+				94017216BD85897AFD7E674A /* libPods-ElevenLabs.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A40000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000E /* XCTest.framework in Frameworks */,
+				9CCE425B58F67B02722D090C /* libPods-ElevenLabsTests.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C40000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D40000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1000000000000000000009A /* Sentry in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E40000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		09F46588956209CB9FD49E42 /* ElevenLabsTests */ = {
+			isa = PBXGroup;
+			children = (
+				C446B9D5B79A7F10C09A6D4B /* ExpoModulesProvider.swift */,
+			);
+			name = ElevenLabsTests;
+			sourceTree = "<group>";
+		};
+		9891A3B4205A65817E052D1C /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				BAA313AB10750B30FCE87D7D /* ElevenLabs */,
+				09F46588956209CB9FD49E42 /* ElevenLabsTests */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		A50000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000004 /* THIRD_PARTY_NOTICES.md */,
+				A50000000000000000000002 /* ElevenLabs */,
+				D50000000000000000000001 /* ElevenLabsMac */,
+				A50000000000000000000003 /* ElevenLabsTests */,
+				C50000000000000000000001 /* ElevenLabsKeyboard */,
+				E50000000000000000000001 /* ElevenLabsLiveActivity */,
+				A50000000000000000000004 /* Frameworks */,
+				A50000000000000000000005 /* Products */,
+				AF7580AEBB471843940ABB85 /* Pods */,
+				9891A3B4205A65817E052D1C /* ExpoModulesProviders */,
+			);
+			sourceTree = "<group>";
+		};
+		A50000000000000000000002 /* ElevenLabs */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* AppDelegate.swift */,
+				AAE100000000000000000001 /* ElevenLabsNative.swift */,
+				AAE100000000000000000002 /* ElevenLabsNative.m */,
+				A20000000000000000000008 /* ContentView.swift */,
+				A20000000000000000000009 /* SettingsView.swift */,
+				A2000000000000000000000A /* HistoryView.swift */,
+				A20000000000000000000090 /* DictationEngine.swift */,
+				A20000000000000000000091 /* DictationIntents.swift */,
+				A20000000000000000000093 /* SegmentedDictationModel.swift */,
+				A20000000000000000000095 /* SegmentedDictationSessionStore.swift */,
+				E20000000000000000000006 /* LiveActivityControlIntents.swift */,
+				E20000000000000000000001 /* DictationActivityAttributes.swift */,
+				E20000000000000000000002 /* DictationLiveActivity.swift */,
+				A20000000000000000000007 /* AppModel.swift */,
+				C20000000000000000000001 /* SharedDictation.swift */,
+				4B5300000000000000000001 /* KeyboardSetupStatus.swift */,
+				C20000000000000000000002 /* HostAppSwitcher.swift */,
+				A20000000000000000000004 /* AudioRecorder.swift */,
+				BCA200000000000000000001 /* AudioRecorderStartPolicy.swift */,
+				BDA200000000000000000001 /* AudioDiagnosticsStore.swift */,
+				A20000000000000000000003 /* ElevenLabsClient.swift */,
+				A20000000000000000000097 /* Observability.swift */,
+				A20000000000000000000006 /* HistoryStore.swift */,
+				A20000000000000000000005 /* KeychainStore.swift */,
+				A20000000000000000000002 /* TranscriptionModels.swift */,
+				A2000000000000000000000B /* Assets.xcassets */,
+				A2000000000000000000000E /* Info.plist */,
+				C20000000000000000000009 /* ElevenLabs.entitlements */,
+				AAE300000000000000000001 /* Supporting */,
+				6B3D61B1310CA2589F3670ED /* PrivacyInfo.xcprivacy */,
+			);
+			path = ElevenLabs;
+			sourceTree = "<group>";
+		};
+		A50000000000000000000003 /* ElevenLabsTests */ = {
+			isa = PBXGroup;
+			children = (
+				BCA200000000000000000002 /* AudioRecorderStartPolicyTests.swift */,
+				A2000000000000000000000C /* ElevenLabsClientTests.swift */,
+				A2000000000000000000000D /* HistoryStoreTests.swift */,
+				A20000000000000000000092 /* RecordingJournalTests.swift */,
+				A20000000000000000000094 /* SegmentedDictationModelTests.swift */,
+				A20000000000000000000096 /* SegmentedDictationSessionStoreTests.swift */,
+				C2000000000000000000000B /* SharedDictationStoreTests.swift */,
+			);
+			path = ElevenLabsTests;
+			sourceTree = "<group>";
+		};
+		A50000000000000000000004 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000010 /* XCTest.framework */,
+				D2F861E911E18A09FD386A40 /* libPods-ElevenLabs.a */,
+				A923429F244B842ECFB605A8 /* libPods-ElevenLabsTests.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A50000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000F /* ElevenLabs.app */,
+				D2000000000000000000000F /* ElevenLabs.app */,
+				C2000000000000000000000A /* ElevenLabsKeyboard.appex */,
+				E20000000000000000000005 /* ElevenLabsLiveActivity.appex */,
+				A20000000000000000000011 /* ElevenLabsTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AAE300000000000000000001 /* Supporting */ = {
+			isa = PBXGroup;
+			children = (
+				AAE100000000000000000003 /* Expo.plist */,
+			);
+			path = Supporting;
+			sourceTree = "<group>";
+		};
+		AF7580AEBB471843940ABB85 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A02F3DDDA77CCB670399854A /* Pods-ElevenLabs.debug.xcconfig */,
+				EBCC528245EAC5209DA00DAD /* Pods-ElevenLabs.release.xcconfig */,
+				D961BF3836C4614AC654B8EE /* Pods-ElevenLabsTests.debug.xcconfig */,
+				DD908ECD91B60FC457890A27 /* Pods-ElevenLabsTests.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		BAA313AB10750B30FCE87D7D /* ElevenLabs */ = {
+			isa = PBXGroup;
+			children = (
+				1AB6461725798FC9000C62A9 /* ExpoModulesProvider.swift */,
+			);
+			name = ElevenLabs;
+			sourceTree = "<group>";
+		};
+		C50000000000000000000001 /* ElevenLabsKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				C20000000000000000000006 /* KeyboardView.swift */,
+				C20000000000000000000003 /* KeyboardViewController.swift */,
+				C20000000000000000000004 /* KeyboardModel.swift */,
+				C20000000000000000000005 /* HostApplicationResolver.swift */,
+				F20000000000000000000001 /* HostApplicationCapture.m */,
+				F20000000000000000000002 /* HostApplicationCapture.h */,
+				F20000000000000000000003 /* ElevenLabsKeyboard-Bridging-Header.h */,
+				C20000000000000000000007 /* Info.plist */,
+				C20000000000000000000008 /* ElevenLabsKeyboard.entitlements */,
+			);
+			path = ElevenLabsKeyboard;
+			sourceTree = "<group>";
+		};
+		D50000000000000000000001 /* ElevenLabsMac */ = {
+			isa = PBXGroup;
+			children = (
+				D20000000000000000000001 /* ElevenLabsMacApp.swift */,
+				D20000000000000000000002 /* MacContentView.swift */,
+				D20000000000000000000003 /* MacAppModel.swift */,
+				D20000000000000000000004 /* MacAudioDevice.swift */,
+				D20000000000000000000005 /* MacAudioRecorder.swift */,
+				D20000000000000000000064 /* MacSingleOutputAudioRecorder.swift */,
+				D20000000000000000000065 /* MacSoundIsolationProcessor.swift */,
+				D20000000000000000000063 /* MacVoiceIsolationProbe.swift */,
+				D20000000000000000000006 /* MacGlobalHotKey.swift */,
+				D20000000000000000000051 /* MacDictationKeys.swift */,
+				D2000000000000000000005E /* MacKeyboardMap.swift */,
+				D2000000000000000000005F /* MacKeyboardMapModel.swift */,
+				D20000000000000000000052 /* MacInputMode.swift */,
+				D20000000000000000000053 /* MacHUDActivity.swift */,
+				D20000000000000000000058 /* MacTranscriptionWorkload.swift */,
+				D2000000000000000000000E /* MacDeliveryTarget.swift */,
+				D20000000000000000000031 /* MacKeyboardLayout.swift */,
+				D20000000000000000000040 /* MacVocabularyStore.swift */,
+				D2000000000000000000060 /* MacVoiceSignature.swift */,
+				D2000000000000000000061 /* MacSpeakerFilter.swift */,
+				D2000000000000000000062 /* MacSpeakerProfileStore.swift */,
+				D20000000000000000000041 /* MacHistoryStore.swift */,
+				D20000000000000000000042 /* MacSoundEffects.swift */,
+				D50000000000000000000002 /* Sounds */,
+				D20000000000000000000043 /* MacPermissions.swift */,
+				D20000000000000000000044 /* MacTranscriptPostProcessor.swift */,
+				D20000000000000000000045 /* MacSettingsView.swift */,
+				D20000000000000000000046 /* MacDeliveryPolicyStore.swift */,
+				D20000000000000000000047 /* MacPendingTranscriptStore.swift */,
+				D20000000000000000000048 /* MacDiagnostics.swift */,
+				D20000000000000000000049 /* MacPendingAudioStore.swift */,
+				D20000000000000000000050 /* MacPasteVerification.swift */,
+				D2000000000000000000005D /* MacApplicationPresence.swift */,
+				F20000000000000000000101 /* MacActiveCaptureRecovery.swift */,
+				H20000000000000000000301 /* MacSingleInstanceLease.swift */,
+				D20000000000000000000007 /* MacPasteController.swift */,
+				D20000000000000000000008 /* MacReliabilityStore.swift */,
+				D20000000000000000000009 /* MacStatusHUD.swift */,
+			);
+			path = ElevenLabsMac;
+			sourceTree = "<group>";
+		};
+		D50000000000000000000002 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				D20000000000000000000054 /* capture-live.caf */,
+				D20000000000000000000055 /* capture-released.caf */,
+				D20000000000000000000056 /* delivery-verified.caf */,
+				D20000000000000000000057 /* needs-attention.caf */,
+				D200000000000000000000A1 /* typing-patter.caf */,
+				D200000000000000000000A2 /* delivery-plop.caf */,
+				D200000000000000000000A3 /* wait-tick.caf */,
+				D200000000000000000000A4 /* dictation-held.caf */,
+				D200000000000000000000A6 /* delivery-held.caf */,
+				D200000000000000000000A5 /* dismiss-fold.caf */,
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
+		E50000000000000000000001 /* ElevenLabsLiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				E20000000000000000000003 /* ElevenLabsLiveActivityWidget.swift */,
+				E20000000000000000000007 /* Assets.xcassets */,
+				E20000000000000000000008 /* ElevenLabsLiveActivity.entitlements */,
+				E20000000000000000000004 /* Info.plist */,
+			);
+			path = ElevenLabsLiveActivity;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A70000000000000000000001 /* ElevenLabs */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80000000000000000000002 /* Build configuration list for PBXNativeTarget "ElevenLabs" */;
+			buildPhases = (
+				1A6513B181C0EA1CC9FE44E4 /* [CP] Check Pods Manifest.lock */,
+				9EBCC809888AB52A09483BBC /* [Expo] Configure project */,
+				A60000000000000000000001 /* Sources */,
+				A40000000000000000000001 /* Frameworks */,
+				A60000000000000000000002 /* Resources */,
+				AAE200000000000000000001 /* Bundle React Native code and images */,
+				C40000000000000000000001 /* Embed App Extensions */,
+				AF07350837345075937B8BF8 /* [CP] Embed Pods Frameworks */,
+				03D602FD5E88D1C089FC1C62 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C30000000000000000000002 /* PBXTargetDependency */,
+				E30000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = ElevenLabs;
+			packageProductDependencies = (
+				A2000000000000000000009A /* Sentry */,
+			);
+			productName = ElevenLabs;
+			productReference = A2000000000000000000000F /* ElevenLabs.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A70000000000000000000002 /* ElevenLabsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80000000000000000000003 /* Build configuration list for PBXNativeTarget "ElevenLabsTests" */;
+			buildPhases = (
+				FDF6090DA1D1A0955CA06AED /* [CP] Check Pods Manifest.lock */,
+				A60000000000000000000003 /* Sources */,
+				A40000000000000000000002 /* Frameworks */,
+				7E6000000000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A30000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = ElevenLabsTests;
+			productName = ElevenLabsTests;
+			productReference = A20000000000000000000011 /* ElevenLabsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C70000000000000000000001 /* ElevenLabsKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsKeyboard" */;
+			buildPhases = (
+				C60000000000000000000001 /* Sources */,
+				C40000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ElevenLabsKeyboard;
+			productName = ElevenLabsKeyboard;
+			productReference = C2000000000000000000000A /* ElevenLabsKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		D70000000000000000000001 /* ElevenLabsMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsMac" */;
+			buildPhases = (
+				D60000000000000000000001 /* Sources */,
+				D40000000000000000000001 /* Frameworks */,
+				D60000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ElevenLabsMac;
+			packageProductDependencies = (
+				D2000000000000000000009A /* Sentry */,
+			);
+			productName = ElevenLabs;
+			productReference = D2000000000000000000000F /* ElevenLabs.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E70000000000000000000001 /* ElevenLabsLiveActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsLiveActivity" */;
+			buildPhases = (
+				E60000000000000000000001 /* Sources */,
+				E40000000000000000000001 /* Frameworks */,
+				E60000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ElevenLabsLiveActivity;
+			productName = ElevenLabsLiveActivity;
+			productReference = E20000000000000000000005 /* ElevenLabsLiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A90000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A70000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
+					A70000000000000000000002 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = A70000000000000000000001;
+					};
+					C70000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					D70000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					E70000000000000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = A80000000000000000000001 /* Build configuration list for PBXProject "ElevenLabs" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A50000000000000000000001;
+			packageReferences = (
+				F90000000000000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A50000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A70000000000000000000001 /* ElevenLabs */,
+				D70000000000000000000001 /* ElevenLabsMac */,
+				C70000000000000000000001 /* ElevenLabsKeyboard */,
+				E70000000000000000000001 /* ElevenLabsLiveActivity */,
+				A70000000000000000000002 /* ElevenLabsTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7E6000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A60000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000B /* Assets.xcassets in Resources */,
+				AAE000000000000000000003 /* Expo.plist in Resources */,
+				369E1136C9A1E55D14BFBB52 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D60000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1000000000000000000000C /* Assets.xcassets in Resources */,
+				D10000000000000000000054 /* capture-live.caf in Resources */,
+				D10000000000000000000055 /* capture-released.caf in Resources */,
+				D10000000000000000000056 /* delivery-verified.caf in Resources */,
+				D10000000000000000000057 /* needs-attention.caf in Resources */,
+				D100000000000000000000A1 /* typing-patter.caf in Resources */,
+				D100000000000000000000A2 /* delivery-plop.caf in Resources */,
+				D100000000000000000000A3 /* wait-tick.caf in Resources */,
+				D100000000000000000000A4 /* dictation-held.caf in Resources */,
+				D100000000000000000000A5 /* dismiss-fold.caf in Resources */,
+				D100000000000000000000A6 /* delivery-held.caf in Resources */,
+				3772E599EC4B9EAB57250E2A /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E60000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E10000000000000000000009 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		03D602FD5E88D1C089FC1C62 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		1A6513B181C0EA1CC9FE44E4 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ElevenLabs-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9EBCC809888AB52A09483BBC /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/$(ELEVENLABS_APP_ENTITLEMENTS_FILE)",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-ElevenLabs/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-ElevenLabs/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-ElevenLabs/expo-configure-project.sh\"\n";
+		};
+		AAE200000000000000000001 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\nif [[ -z \"$CLI_PATH\" ]]; then\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n";
+		};
+		AF07350837345075937B8BF8 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ElevenLabs/Pods-ElevenLabs-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		FDF6090DA1D1A0955CA06AED /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ElevenLabsTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* AppDelegate.swift in Sources */,
+				AAE000000000000000000001 /* ElevenLabsNative.swift in Sources */,
+				AAE000000000000000000002 /* ElevenLabsNative.m in Sources */,
+				A10000000000000000000002 /* TranscriptionModels.swift in Sources */,
+				A10000000000000000000003 /* ElevenLabsClient.swift in Sources */,
+				A10000000000000000000097 /* Observability.swift in Sources */,
+				A10000000000000000000004 /* AudioRecorder.swift in Sources */,
+				BCA100000000000000000001 /* AudioRecorderStartPolicy.swift in Sources */,
+				BDA100000000000000000001 /* AudioDiagnosticsStore.swift in Sources */,
+				A10000000000000000000005 /* KeychainStore.swift in Sources */,
+				A10000000000000000000006 /* HistoryStore.swift in Sources */,
+				A10000000000000000000007 /* AppModel.swift in Sources */,
+				E10000000000000000000001 /* DictationActivityAttributes.swift in Sources */,
+				E10000000000000000000002 /* DictationLiveActivity.swift in Sources */,
+				E10000000000000000000006 /* LiveActivityControlIntents.swift in Sources */,
+				A10000000000000000000090 /* DictationEngine.swift in Sources */,
+				A10000000000000000000091 /* DictationIntents.swift in Sources */,
+				A10000000000000000000093 /* SegmentedDictationModel.swift in Sources */,
+				A10000000000000000000095 /* SegmentedDictationSessionStore.swift in Sources */,
+				C10000000000000000000001 /* SharedDictation.swift in Sources */,
+				4B5400000000000000000001 /* KeyboardSetupStatus.swift in Sources */,
+				C10000000000000000000002 /* HostAppSwitcher.swift in Sources */,
+				A10000000000000000000008 /* ContentView.swift in Sources */,
+				A10000000000000000000009 /* SettingsView.swift in Sources */,
+				A1000000000000000000000A /* HistoryView.swift in Sources */,
+				F6A788D8842282FEA95CF8EC /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A60000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BCA100000000000000000003 /* AudioRecorderStartPolicyTests.swift in Sources */,
+				A1000000000000000000000C /* ElevenLabsClientTests.swift in Sources */,
+				A1000000000000000000000D /* HistoryStoreTests.swift in Sources */,
+				A10000000000000000000092 /* RecordingJournalTests.swift in Sources */,
+				A10000000000000000000094 /* SegmentedDictationModelTests.swift in Sources */,
+				A10000000000000000000096 /* SegmentedDictationSessionStoreTests.swift in Sources */,
+				C1000000000000000000000B /* SharedDictationStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C10000000000000000000003 /* KeyboardViewController.swift in Sources */,
+				C10000000000000000000004 /* KeyboardModel.swift in Sources */,
+				C10000000000000000000005 /* HostApplicationResolver.swift in Sources */,
+				F10000000000000000000001 /* HostApplicationCapture.m in Sources */,
+				C10000000000000000000006 /* KeyboardView.swift in Sources */,
+				C10000000000000000000007 /* SharedDictation.swift in Sources */,
+				4B5400000000000000000002 /* KeyboardSetupStatus.swift in Sources */,
+				E10000000000000000000008 /* LiveActivityControlIntents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D10000000000000000000001 /* ElevenLabsMacApp.swift in Sources */,
+				D10000000000000000000002 /* MacContentView.swift in Sources */,
+				D10000000000000000000003 /* MacAppModel.swift in Sources */,
+				D10000000000000000000004 /* MacAudioDevice.swift in Sources */,
+				D10000000000000000000005 /* MacAudioRecorder.swift in Sources */,
+				D10000000000000000000064 /* MacSingleOutputAudioRecorder.swift in Sources */,
+				D10000000000000000000065 /* MacSoundIsolationProcessor.swift in Sources */,
+				D10000000000000000000063 /* MacVoiceIsolationProbe.swift in Sources */,
+				D10000000000000000000006 /* MacGlobalHotKey.swift in Sources */,
+				D10000000000000000000051 /* MacDictationKeys.swift in Sources */,
+				D1000000000000000000005E /* MacKeyboardMap.swift in Sources */,
+				D1000000000000000000005F /* MacKeyboardMapModel.swift in Sources */,
+				D10000000000000000000052 /* MacInputMode.swift in Sources */,
+				D10000000000000000000053 /* MacHUDActivity.swift in Sources */,
+				D10000000000000000000058 /* MacTranscriptionWorkload.swift in Sources */,
+				D1000000000000000000005D /* MacApplicationPresence.swift in Sources */,
+				D10000000000000000000007 /* MacPasteController.swift in Sources */,
+				D1000000000000000000000E /* MacDeliveryTarget.swift in Sources */,
+				D1000000000000000000000F /* MacKeyboardLayout.swift in Sources */,
+				D10000000000000000000040 /* MacVocabularyStore.swift in Sources */,
+				D1000000000000000000060 /* MacVoiceSignature.swift in Sources */,
+				D1000000000000000000061 /* MacSpeakerFilter.swift in Sources */,
+				D1000000000000000000062 /* MacSpeakerProfileStore.swift in Sources */,
+				D10000000000000000000041 /* MacHistoryStore.swift in Sources */,
+				D10000000000000000000042 /* MacSoundEffects.swift in Sources */,
+				D10000000000000000000043 /* MacPermissions.swift in Sources */,
+				D10000000000000000000044 /* MacTranscriptPostProcessor.swift in Sources */,
+				D10000000000000000000045 /* MacSettingsView.swift in Sources */,
+				D10000000000000000000046 /* MacDeliveryPolicyStore.swift in Sources */,
+				D10000000000000000000047 /* MacPendingTranscriptStore.swift in Sources */,
+				D10000000000000000000048 /* MacDiagnostics.swift in Sources */,
+				D10000000000000000000049 /* MacPendingAudioStore.swift in Sources */,
+				D10000000000000000000050 /* MacPasteVerification.swift in Sources */,
+				F10000000000000000000101 /* MacActiveCaptureRecovery.swift in Sources */,
+				H10000000000000000000301 /* MacSingleInstanceLease.swift in Sources */,
+				D10000000000000000000008 /* MacReliabilityStore.swift in Sources */,
+				D10000000000000000000009 /* TranscriptionModels.swift in Sources */,
+				D1000000000000000000000A /* ElevenLabsClient.swift in Sources */,
+				D1000000000000000000000B /* KeychainStore.swift in Sources */,
+				D1000000000000000000000D /* MacStatusHUD.swift in Sources */,
+				D10000000000000000000097 /* Observability.swift in Sources */,
+				BCA100000000000000000002 /* AudioRecorderStartPolicy.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E10000000000000000000003 /* DictationActivityAttributes.swift in Sources */,
+				E10000000000000000000004 /* ElevenLabsLiveActivityWidget.swift in Sources */,
+				E10000000000000000000007 /* LiveActivityControlIntents.swift in Sources */,
+				E1000000000000000000000A /* SharedDictation.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A70000000000000000000001 /* ElevenLabs */;
+			targetProxy = A30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		C30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C70000000000000000000001 /* ElevenLabsKeyboard */;
+			targetProxy = C30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		E30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E70000000000000000000001 /* ElevenLabsLiveActivity */;
+			targetProxy = E30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B10000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				PODFILE_DIR = "$(SRCROOT)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				USE_HERMES = true;
+			};
+			name = Debug;
+		};
+		B10000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				PODFILE_DIR = "$(SRCROOT)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B10000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A02F3DDDA77CCB670399854A /* Pods-ElevenLabs.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(ELEVENLABS_APP_ENTITLEMENTS_FILE)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ELEVENLABS_APP_BUNDLE_IDENTIFIER = com.example.ElevenLabs;
+				ELEVENLABS_APP_ENTITLEMENTS_FILE = ElevenLabs/ElevenLabs.entitlements;
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.example.ElevenLabs;
+				ELEVENLABS_SENTRY_DSN = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabs/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG -Xcc -w";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_APP_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B10000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBCC528245EAC5209DA00DAD /* Pods-ElevenLabs.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(ELEVENLABS_APP_ENTITLEMENTS_FILE)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KC2ZK3BWH7;
+				ELEVENLABS_APP_BUNDLE_IDENTIFIER = com.pedro.ElevenLabs;
+				ELEVENLABS_APP_ENTITLEMENTS_FILE = ElevenLabs/ElevenLabs.entitlements;
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.pedro.ElevenLabs;
+				ELEVENLABS_SENTRY_DSN = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabs/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE -Xcc -w";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_APP_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B10000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D961BF3836C4614AC654B8EE /* Pods-ElevenLabsTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				ELEVENLABS_TESTS_BUNDLE_IDENTIFIER = com.example.ElevenLabsTests;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OTHER_LDFLAGS = "";
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_TESTS_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ElevenLabs.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ElevenLabs";
+				TEST_TARGET_NAME = ElevenLabs;
+			};
+			name = Debug;
+		};
+		B10000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = DD908ECD91B60FC457890A27 /* Pods-ElevenLabsTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				ELEVENLABS_TESTS_BUNDLE_IDENTIFIER = com.example.ElevenLabsTests;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OTHER_LDFLAGS = "";
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_TESTS_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ElevenLabs.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ElevenLabs";
+				TEST_TARGET_NAME = ElevenLabs;
+			};
+			name = Release;
+		};
+		C10000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.example.ElevenLabs;
+				ELEVENLABS_KEYBOARD_BUNDLE_IDENTIFIER = com.example.ElevenLabs.Keyboard;
+				ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE = ElevenLabsKeyboard/ElevenLabsKeyboard.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabsKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_KEYBOARD_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ELEVENLABS_KEYBOARD_EXTENSION";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ElevenLabsKeyboard/ElevenLabsKeyboard-Bridging-Header.h";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C1000000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KC2ZK3BWH7;
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.pedro.ElevenLabs;
+				ELEVENLABS_KEYBOARD_BUNDLE_IDENTIFIER = com.pedro.ElevenLabs.Keyboard;
+				ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE = ElevenLabsKeyboard/ElevenLabsKeyboard.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabsKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_KEYBOARD_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ELEVENLABS_KEYBOARD_EXTENSION";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ElevenLabsKeyboard/ElevenLabsKeyboard-Bridging-Header.h";
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		D90000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ELEVENLABS_SENTRY_DSN = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dictation Button";
+				INFOPLIST_KEY_CFBundleName = ElevenLabs;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Dictation Button records from the microphone you select so it can transcribe your speech.";
+				INFOPLIST_KEY_SentryDSN = "$(ELEVENLABS_SENTRY_DSN)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ElevenLabsMac;
+				PRODUCT_NAME = ElevenLabs;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D90000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ELEVENLABS_SENTRY_DSN = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Dictation Button";
+				INFOPLIST_KEY_CFBundleName = ElevenLabs;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Dictation Button records from the microphone you select so it can transcribe your speech.";
+				INFOPLIST_KEY_SentryDSN = "$(ELEVENLABS_SENTRY_DSN)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ElevenLabsMac;
+				PRODUCT_NAME = ElevenLabs;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		E90000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ElevenLabsLiveActivity/ElevenLabsLiveActivity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.example.ElevenLabs;
+				ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER = com.example.ElevenLabs.LiveActivity;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabsLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ELEVENLABS_LIVE_ACTIVITY_EXTENSION";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E90000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ElevenLabsLiveActivity/ElevenLabsLiveActivity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KC2ZK3BWH7;
+				ELEVENLABS_APP_GROUP_IDENTIFIER = group.com.pedro.ElevenLabs;
+				ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER = com.pedro.ElevenLabs.LiveActivity;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ElevenLabsLiveActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ELEVENLABS_LIVE_ACTIVITY_EXTENSION";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A80000000000000000000001 /* Build configuration list for PBXProject "ElevenLabs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000000000000000000001 /* Debug */,
+				B10000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80000000000000000000002 /* Build configuration list for PBXNativeTarget "ElevenLabs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000000000000000000003 /* Debug */,
+				B10000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80000000000000000000003 /* Build configuration list for PBXNativeTarget "ElevenLabsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000000000000000000005 /* Debug */,
+				B10000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C10000000000000000000009 /* Debug */,
+				C1000000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D90000000000000000000001 /* Debug */,
+				D90000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E80000000000000000000001 /* Build configuration list for PBXNativeTarget "ElevenLabsLiveActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E90000000000000000000001 /* Debug */,
+				E90000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F90000000000000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A2000000000000000000009A /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F90000000000000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+		D2000000000000000000009A /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F90000000000000000000001 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A90000000000000000000001 /* Project object */;
+}

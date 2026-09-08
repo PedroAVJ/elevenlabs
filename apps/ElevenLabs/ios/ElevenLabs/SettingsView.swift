@@ -1,0 +1,401 @@
+import SwiftUI
+import UIKit
+
+struct SettingsView: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+
+    @State private var apiKeyInput = ""
+    @State private var apiKeyErrorMessage: String?
+    @State private var showRemoveConfirmation = false
+
+    private var trimmedInput: String {
+        apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                keyboardSection
+                apiKeySection
+                triggerSection
+                transcriptionSection
+                clipboardSection
+                HistoryRetentionSection(history: model.history)
+                privacySection
+            }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .tint(Theme.accent)
+        .alert(
+            "Couldn't Update Key",
+            isPresented: Binding(
+                get: { apiKeyErrorMessage != nil },
+                set: { if !$0 { apiKeyErrorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(apiKeyErrorMessage ?? "")
+        }
+        .confirmationDialog(
+            "Remove the saved API key?",
+            isPresented: $showRemoveConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Remove Key", role: .destructive) {
+                do {
+                    try model.deleteAPIKey()
+                } catch {
+                    apiKeyErrorMessage = error.localizedDescription
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll need to paste a key again before your next dictation.")
+        }
+    }
+
+    private var keyboardSection: some View {
+        Section {
+            LabeledContent {
+                Text("Managed by iOS")
+                    .foregroundStyle(Theme.inkMuted)
+            } label: {
+                Label(
+                    "Dictation Button Keyboard",
+                    systemImage: "keyboard"
+                )
+                .foregroundStyle(Theme.ink)
+            }
+
+            Button {
+                model.openKeyboardSettings()
+            } label: {
+                Label(
+                    "Open Keyboard Settings",
+                    systemImage: "arrow.up.forward.app"
+                )
+            }
+        } header: {
+            Text("Keyboard")
+        } footer: {
+            Text(
+                "For cursor insertion, add Dictation Button in iOS Keyboard Settings and turn on Allow Full Access. Dictation Button cannot read or change iOS's keyboard list."
+            )
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private var apiKeySection: some View {
+        Section {
+            if model.hasAPIKey {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("API key saved")
+                            .foregroundStyle(Theme.ink)
+                        Text("Stored in the Keychain — never shown again.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.inkMuted)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+
+            SecureField(
+                model.hasAPIKey ? "Paste a replacement key" : "Paste your speech API key",
+                text: $apiKeyInput
+            )
+            .textContentType(.password)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .foregroundStyle(Theme.ink)
+
+            Button {
+                saveKey()
+            } label: {
+                Label("Save Key", systemImage: "key.fill")
+            }
+            .disabled(trimmedInput.isEmpty)
+
+            if model.hasAPIKey {
+                Button(role: .destructive) {
+                    showRemoveConfirmation = true
+                } label: {
+                    Label("Remove Key", systemImage: "trash")
+                        .foregroundStyle(Theme.danger)
+                }
+            }
+        } header: {
+            Text("Speech API Key")
+        } footer: {
+            Text(
+                "Transcription runs on your configured speech-service account and spends its Speech-to-Text credits. The key is stored only in this device's Keychain and is never displayed after saving."
+            )
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    /// iOS owns Control Center placement and Live Activity authorization.
+    private var triggerSection: some View {
+        Section {
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    openURL(url)
+                }
+            } label: {
+                Label("Open iOS Settings", systemImage: "arrow.up.forward.app")
+            }
+            .accessibilityHint(
+                "Opens Dictation Button's page in Settings, where Live Activities are turned on."
+            )
+        } header: {
+            Text("System Controls")
+        } footer: {
+            Text(
+                "Add Dictation Button to Control Center or assign it to the Action Button. It puts a ready Live Activity on screen without taking the microphone. Tap that Live Activity to open Dictation Button and start listening; the filled control pauses and the play control continues."
+            )
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private var transcriptionSection: some View {
+        Section {
+            NavigationLink {
+                LanguagePickerView(selection: $model.language)
+            } label: {
+                LabeledContent {
+                    Text(model.language.title)
+                        .foregroundStyle(Theme.inkMuted)
+                } label: {
+                    Text("Language")
+                        .foregroundStyle(Theme.ink)
+                }
+            }
+            .accessibilityHint("Opens the full list of transcription languages.")
+
+            Toggle("Clean Speech", isOn: $model.cleanSpeech)
+                .foregroundStyle(Theme.ink)
+        } header: {
+            Text("Transcription")
+        } footer: {
+            Text(
+                "Auto detects the spoken language. Clean Speech asks the speech service to drop filler words and stumbles for paste-ready text."
+            )
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private var clipboardSection: some View {
+        Section {
+            Toggle("Auto-copy transcript", isOn: $model.autoCopy)
+                .foregroundStyle(Theme.ink)
+        } header: {
+            Text("Clipboard")
+        } footer: {
+            Text(
+                "Applies only to recordings started manually in this app. Dictations controlled from another app return through the Dictation Button controls and insert at the cursor instead."
+            )
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private var privacySection: some View {
+        Section {
+            EmptyView()
+        } header: {
+            Text("Privacy")
+        } footer: {
+            Text(
+                "Audio leaves this device only when you transcribe, and goes directly to the configured speech service. Transcripts, history, and settings stay on your iPhone."
+            )
+        }
+    }
+
+    private func saveKey() {
+        do {
+            try model.saveAPIKey(apiKeyInput)
+            apiKeyInput = ""
+        } catch {
+            apiKeyErrorMessage = error.localizedDescription
+        }
+    }
+}
+
+/// Full Scribe catalog picker. Auto, English, and Spanish stay one tap away at
+/// the top; everything else is reachable by scrolling or searching.
+private struct LanguagePickerView: View {
+    @Binding var selection: TranscriptionLanguage
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+
+    private static let quickChoices: [TranscriptionLanguage] = [
+        .automatic, .english, .spanish,
+    ]
+
+    private var otherLanguages: [TranscriptionLanguage] {
+        TranscriptionLanguage.supportedCases.filter {
+            !Self.quickChoices.contains($0)
+        }
+    }
+
+    private var trimmedQuery: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var searchResults: [TranscriptionLanguage] {
+        TranscriptionLanguage.supportedCases.filter {
+            $0.title.localizedCaseInsensitiveContains(trimmedQuery)
+                || $0.rawValue.localizedCaseInsensitiveContains(trimmedQuery)
+                || ($0.apiCode?.localizedCaseInsensitiveContains(trimmedQuery) ?? false)
+        }
+    }
+
+    var body: some View {
+        List {
+            if trimmedQuery.isEmpty {
+                Section("Quick Choices") {
+                    ForEach(Self.quickChoices) { language in
+                        row(language)
+                    }
+                }
+                .listRowBackground(Theme.surface)
+
+                Section("All Languages") {
+                    ForEach(otherLanguages) { language in
+                        row(language)
+                    }
+                }
+                .listRowBackground(Theme.surface)
+            } else {
+                Section {
+                    ForEach(searchResults) { language in
+                        row(language)
+                    }
+                }
+                .listRowBackground(Theme.surface)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
+        .overlay {
+            if !trimmedQuery.isEmpty, searchResults.isEmpty {
+                ContentUnavailableView.search(text: trimmedQuery)
+            }
+        }
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: "Search languages"
+        )
+        .navigationTitle("Language")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func row(_ language: TranscriptionLanguage) -> some View {
+        Button {
+            selection = language
+            dismiss()
+        } label: {
+            HStack {
+                Text(language.title)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                if language == selection {
+                    Image(systemName: "checkmark")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(language == selection ? [.isSelected] : [])
+    }
+}
+
+/// Retention picker that never deletes silently: choosing a policy that would
+/// remove saved transcripts requires an explicit destructive confirmation.
+private struct HistoryRetentionSection: View {
+    @ObservedObject var history: HistoryStore
+    @State private var pendingChange: PendingRetentionChange?
+
+    private struct PendingRetentionChange: Identifiable {
+        let policy: HistoryRetentionPolicy
+        let itemsRemoved: Int
+        var id: String { policy.id }
+    }
+
+    private var retentionBinding: Binding<HistoryRetentionPolicy> {
+        Binding(
+            get: { history.retention },
+            set: { newPolicy in
+                guard newPolicy != history.retention else { return }
+                let removed = history.itemsRemoved(by: newPolicy)
+                if removed > 0 {
+                    pendingChange = PendingRetentionChange(
+                        policy: newPolicy,
+                        itemsRemoved: removed
+                    )
+                } else {
+                    history.setRetention(newPolicy)
+                }
+            }
+        )
+    }
+
+    var body: some View {
+        Section {
+            Picker("Keep History", selection: retentionBinding) {
+                ForEach(HistoryRetentionPolicy.allCases) { policy in
+                    Text(policy.title).tag(policy)
+                }
+            }
+            .pickerStyle(.menu)
+            .foregroundStyle(Theme.ink)
+        } header: {
+            Text("History")
+        } footer: {
+            Text(history.retention.settingsDescription)
+        }
+        .listRowBackground(Theme.surface)
+        .confirmationDialog(
+            "Change history retention?",
+            isPresented: Binding(
+                get: { pendingChange != nil },
+                set: { if !$0 { pendingChange = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: pendingChange
+        ) { change in
+            Button(role: .destructive) {
+                history.setRetention(change.policy)
+            } label: {
+                Text("Delete ^[\(change.itemsRemoved) Transcript](inflect: true)")
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { change in
+            if change.policy == .never {
+                Text(
+                    "History will be turned off, and ^[\(change.itemsRemoved) saved transcript](inflect: true) will be deleted from this iPhone."
+                )
+            } else {
+                Text(
+                    "Transcripts will be kept for \(change.policy.title.lowercased()), and ^[\(change.itemsRemoved) older transcript](inflect: true) will be deleted from this iPhone."
+                )
+            }
+        }
+    }
+}

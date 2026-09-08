@@ -1,0 +1,169 @@
+# macOS product-parity ledger
+
+This is the product boundary for ElevenLabs on macOS after reviewing the public
+documentation and changelogs for Superwhisper and Wispr Flow. It is a capability
+ledger, not a claim that their private implementations were copied.
+
+Research snapshot: 2026-08-04.
+
+## Product thesis
+
+- One transcription engine: ElevenLabs Scribe v2. There is no model or provider
+  selector.
+- Batch network work begins only after complete Continuity release.
+- At the delivery boundary, a transcript may enter only the currently focused
+  writable, non-secure editor. If none exists, the exact newest transcript
+  becomes the clipboard fallback regardless of older recovery entries.
+- Accessibility object continuity across a dictation is not a universal
+  invariant. Electron and Chromium may rebuild, proxy, or replace their
+  Accessibility tree and editable node while the user remains in an editor.
+- No silent microphone fallback, silent paste fallback, or destructive recovery
+  path.
+
+Those constraints are stricter than either reference product in a few places.
+They are product decisions, not missing parity.
+
+## Adopted capability set
+
+| Area | Reference behavior worth adopting | ElevenLabs implementation |
+| --- | --- | --- |
+| Global capture | Start and stop without bringing the app forward | Four bare, instantaneous taps with no timing windows: right ⌘ starts, pauses, or resumes on the Mac microphone; right ⌥ does the same for the iPhone; fn ends the dictation toward delivery, parks it while Draining, or releases it from Held; Escape dismisses the dictation into recovery. A source key can never deliver text and never destroy it. Held is indefinite, and source keys still reopen it without loss. There is no stored input mode — the key pressed decides the microphone at each start. Ordinary ⌘/⌥ chords and both left-hand keys pass through untouched. Companion chords fire once per physical keypress, never on OS key-repeat. |
+| Capture status | A small recording surface that reports, rather than commands | One wordless, click-through Liquid Glass capsule owns the whole dictation. It blooms from a neutral laptop glyph for Mac or a neutral phone plus amber wait-dot for iPhone into the real red voice waveform. Pausing freezes the same waveform in gray and never times out; every banked segment remains invisible plumbing. End turns the capsule directly into three typing dots. A second fn before the output boundary stops the dots and parks delivery indefinitely as a steady amber raised hand in the same compact output pill; it cannot be confused with paused recording's wide frozen waveform. Releasing Held returns to dots, verified delivery pops outward, and Escape folds inward to recovery. Reopening while Draining or Held restores the same capsule identity. A separate recovery hold is acknowledged by one count-free clipboard or document glyph for two seconds, then the HUD disappears; durable waiting and possibly-delivered text belongs only to the dashboard and is never replayed into the HUD on launch. The capsule is draggable anywhere only after the deliberate Move HUD command; its exact position persists, while normal status mode stays fully click-through. It has no controls, is never visible at idle, and never carries success, error, setup, model, network, or recovery-queue notifications. The Mac courtesy beat is hidden after 0.5 seconds, an iPhone wait after 20, releasing after 15, and Draining after 90; user-controlled Held has no visibility cap. Reduce Motion replaces shape and scale motion with crossfades. High-priority VoiceOver announcements describe consequential phase changes. |
+| Interaction sounds | Confirm state without demanding a glance | Preloaded earcons share one synthesized timbre family: a low wait tick for the iPhone wake-up, a rising ping only when capture is live, a low held tone on pause, a muted fold tone on Escape, typing patter only while automatic delivery is armed, two dry level knocks when fn parks delivery, and a falling plop only after verified delivery. Release from Held restarts the patter without an extra chime. Error remains the only falling two-note phrase. The cues follow proven machine state, and the whole family obeys the Sounds setting. |
+| First run | Guided setup and visible readiness | Onboarding covers the API key, explicit permission requests, microphone selection/test, shortcuts, language, and cleanup behavior. It can be replayed. |
+| Microphones | External-device choice and troubleshooting | Exact Core Audio transport classification, per-dictation semantic Mac/iPhone source chosen by the key pressed, ranked user-approved fallback list within that source, gain display, connect latency, live level, and a three-second record/playback test. No cross-mode fallback, and no source is remembered between dictations or across launches. There is no mid-recording handover: switching source is pause-then-resume, and the other source key only nudges while a microphone is hot. |
+| Continuity reliability | Do not record through the iPhone wake-up gap | Capture waits for a steady, audible sample stream. Stop synchronously ends the AVCapture session before batch transcription begins. Sleep, disconnects, startup cancellation, and mid-stream stalls are handled explicitly. |
+| Other audio | Make speaking easy to hear without stopping media | Once capture is live, both sources use the same independent output fade: 12 dB down (roughly one-quarter amplitude) over 400 ms, then back over 900 ms at every recording exit. Playback keeps running and no extra audio-capture route is created. A private fsynced write-ahead receipt follows the exact output through crashes, route changes, and disconnects until complete restoration is read back. Fine user volume changes win through Core Audio listeners; unsupported outputs fail open unchanged. |
+| Long dictation | Longer sessions with visible limits | Twenty-minute hard limit, one-minute warning, no-audio warning, automatic safe finalization, and immediate explicit cancellation with Escape. Short finalized recordings are still sent to Scribe; there is no arbitrary minimum-duration discard. |
+| Existing audio | Transcribe a file without blocking live dictation | Audio import has a separate manual-output lane, a fail-closed 20-minute duration limit, a 1 GB local admission limit, and never auto-pastes when it finishes. It does not block capture or spoken-order delivery, although imports and live dictations share Scribe's three-request admission limit. Normal Quit waits for secure import staging to finish or refuses to quit after the bounded wait. |
+| Network failure | Retry without losing what was said | Every finalized recording is moved into a private, crash-safe pending-audio journal before upload and is removed only after its final text and consumption receipt are durable. Interrupted active WAVs are recovered on the next primary launch. Transient network/429/5xx failures retry with bounded backoff; terminal or history-write failures remain individually retryable or discardable. |
+| Concurrent work | Let paused segments transcribe without splitting the dictation | The microphone is released at every pause and Scribe requests are admission-limited. Imports do not block live work. While a dictation is open — connecting, recording, resting, or user-held — nothing reaches the cursor. Fn closes one atomic delivery batch; a second fn may gate only its landing while every segment keeps transcribing. Release waits for every banked segment, seam-fits them in spoken order, resolves the then-current destination, and crosses the output boundary once, so a completed prefix can never land ahead of a slower suffix or land twice. Pause transcribes eagerly, so End after a pause and release after a completed Held transcription are usually instant. |
+| Destination behavior | Follow the user's current focus | Inside the serialized delivery gate, ElevenLabs resolves the currently focused application and uses it even when Accessibility exposes no writable node or a replacement Electron/Chromium proxy. Record-start destination identity, secure-field classification, AX object equality, and click/keystroke generations do not veto delivery. Only the absence of an external focused application selects clipboard fallback. |
+| Delivery compatibility | Work across native, web, and terminal-style fields | Current target-app Paste menu first, layout-aware Command-V fallback, optional chunked Unicode type-out, clipboard-only mode, and clipboard restoration after an exact verified insertion. Every pasteboard writer participates in the same serialized transaction, including fallback and explicit History/held copies. Chunked type-out and configured auto-send continue into whichever control owns focus when each event is posted. Unconfirmed delivery remains visibly unconfirmed, recoverable, and on the clipboard. |
+| Return to destination | Recover when the user switched away | When no writable editor is focused, the exact newest transcript becomes the clipboard fallback even when older recovery entries exist; every unresolved entry also remains durable in the dashboard. Delayed same-session and recovered text is released explicitly into the current focused writable editor rather than waiting for an archived AX node to return. User clipboard changes are reconciled from the private claim rather than inferred from queue size. A side effect that may have landed remains marked possibly delivered and is never retried automatically; reviewed uncertain text additionally requires a one-shot dashboard authorization for exactly the reviewed queue. |
+| Last transcript | Quickly reuse or correct recent text | Editable transcript, copy, clear, learn-edits, and global copy/paste-last shortcuts. While first-output recovery is unresolved, the transcript is visibly read-only and nonselectable so standard editor shortcuts cannot bypass the handoff. Copy/Paste Last refuse any transcript whose first output lacks a durably resolved handoff; a History-backed handoff can be repaired on demand without making the source audio retryable. |
+| Per-app behavior | Different apps need different insertion rules | Durable rules keyed by the delivery-time destination's bundle identifier select automatic, Paste-menu, type-out, or clipboard-only delivery; they can opt into context and explicitly confirmed auto-send. Auto-send is never used for delayed held text. |
+| Vocabulary | Teach names and domain language | Up to 1,000 validated batch keyterms are sent to Scribe. The current batch contract requires fewer than 50 characters and no more than five words per term and forbids `<`, `>`, `{`, `}`, `[`, `]`, backslashes, and control characters. Bulk paste/import and deterministic duplicate handling are included. The UI discloses ElevenLabs' current 20% keyterm surcharge and the 20-second minimum billing unit above 100 batch terms. Edits publish only after a private atomic write; damaged or newer documents remain byte-for-byte untouched. |
+| Replacements and snippets | Expand or correct recurring phrases | Ordered, enableable heard-as → written-as rules support exact spellings and longer text expansions. Transcript edits teach corrections as one atomic transaction, with the same fail-closed persistence guarantees as vocabulary. |
+| Local cleanup | Predictable formatting without another model | Scribe's clean-speech option plus local spoken punctuation/new-line commands, deterministic replacements, and cursor-aware spacing/capitalization. Intrinsic cleanup is prepared when Scribe returns, but each chunk's seam is fitted only inside the serialized paste transaction against the current delivery editor's live pre-caret text. Explicit delayed runs fold one chunk at a time at the current focus, preventing stale record-start snapshots, `word.Next` collisions, duplicate spaces, and broken sentence casing. |
+| Context | Use nearby text to improve recognition, transparently | Recognition context is off by default. When enabled globally or for one app, only a small caret-local window, selection, app name, and window title are reduced to candidate keyterms. The UI shows how many terms were captured. Dynamic app/caret terms are validated and receive the finite 1,000 slots before global vocabulary, so a full dictionary cannot silently suppress the more specific context. Separately, local spacing/capitalization may read at most 256 pre-caret characters in process memory; those characters are never uploaded or stored. Secure fields are never read by either path. |
+| Language | Automatic and pinned language hints | The macOS picker exposes 100 choices: Auto plus all 99 documented Scribe language hints. Auto, English, and Spanish stay pinned above the alphabetical catalog, and the setting persists. Auto results below 50% Scribe language confidence are preserved but visibly flagged for review. |
+| History | Search, replay, reprocess, and control retention | Local searchable and editable History with per-record deletion, Never/1/7/30/90-day or forever retention, a 500-record ordinary cap, and confirmed purge. Source-linked recovery proofs may temporarily exceed that cap rather than be destroyed. Successful source audio is retained by default as speech-efficient AAC/M4A for playback and Process Again; older raw-WAV History copies migrate in place without changing transcripts. Audio follows transcript retention, is capped at 1 GiB, and refuses a new optional copy if less than 2 GiB would remain free. Process Again uses the current language/vocabulary/replacement settings, updates only that record, never pastes or auto-sends, and can be cancelled. Edit and Process Again are blocked while the row still owns source recovery or a same-ID delivery escrow, so saved and deliverable text cannot diverge. A History row that is still durable recovery proof cannot expire or be deleted until the audio journal owns the linked completion receipt. Failed audio remains in a separate recovery queue. |
+| Permissions | Explain why global input or paste is unavailable | Live Microphone, Accessibility, Input Monitoring, Keyboard Output, and Login Item status with explicit request/open-settings actions. Secure Input is surfaced rather than treated as a mysterious failure. |
+| Diagnostics | Make intermittent failures reportable without exporting content | Privacy-safe JSON includes versions, permission booleans, microphone transport category/gain, timing/outcome metadata, and queue counts. It excludes names, transcripts, audio, clipboard data, captured context, and credentials. |
+| Offline recovery | Never lose speech to a network transition | Connectivity status is visible in the app and menu bar, outside the capture indicator. When the network is known to be unavailable, ElevenLabs journals new audio without making a doomed request. Typed connectivity failures remain in the same private queue and retry once after `NWPathMonitor` reports an actual usable-path recovery; satisfied-to-satisfied churn cannot loop them. A reconnect that races ahead of the final request error is recovered by a path-generation receipt. Every automatic retry finishes in held/manual output and can never use a stale caret or auto-send. Authentication, validation, rate-limit, certificate/ATS, and no-speech failures remain manual so reconnect cannot create an unrelated retry loop. |
+| Lifecycle | Behave like a native menu-bar utility | ElevenLabs launches as an LSUIElement accessory with a persistent menu bar item and no Dock or Command-Tab presence. Opening the dashboard or Settings promotes it to a regular foreground app until the last user-facing window closes; the nonactivating HUD never promotes it, and bootstrap, recording, and global shortcuts do not depend on a window or menu being open. A product-wide per-user process lease protects the shared stores across signed, ad-hoc, renamed, and differing-bundle-ID builds; a legacy-running-app check covers builds that predate the lease, and secondary launches never construct the data-owning model. Also included: launch at login, session heartbeat, crash/unclean-quit notice, idle display/system sleep prevention only while the microphone is recording, primary-instance-only temp recovery, and an asynchronous Quit barrier that finalizes, releases, and journals active speech before termination. |
+
+## Deliberate exclusions
+
+These were present in one or both reference products but conflict with the
+product thesis or solve a different job:
+
+- Model/provider pickers, local model downloads, and “fast versus accurate”
+  choices. Scribe v2 is the product.
+- LLM rewrite modes, prompt libraries, command mode, tone transforms, and
+  writing-style imitation. They add a second inference system and make output
+  less deterministic.
+- Meeting recording, system-audio capture, diarization, named speakers,
+  summaries, and subtitle/document export. ElevenLabs is single-speaker cursor
+  dictation, not a meeting recorder.
+- Team administration, shared dictionaries, analytics dashboards, enterprise
+  identity, and billing controls.
+- Screen-wide OCR/screenshot context. Uploaded recognition context is opt-in,
+  caret-local, reduced to spelling hints, and never stored in diagnostics. The
+  independent local-only formatting read is limited to 256 pre-caret characters.
+- A general developer API, CLI, MCP server, or automation platform over private
+  transcript history, including URL schemes, Services, and broad App Intents.
+  Those widen the privacy and support surface without improving core dictation.
+- Applying the global macOS Text Replacements dictionary or an automatic
+  `NSSpellChecker` rewrite. ElevenLabs uses explicit app-owned replacements so
+  users can inspect every deterministic transformation and so a hidden system
+  correction cannot fight a Scribe keyterm.
+- Controlling unrelated media playback. ElevenLabs never sends play/pause or
+  per-app volume commands. Its temporary output fade is bounded to live capture,
+  durably recoverable, and yields to a manual volume change.
+
+The four fixed dictation keys are retained as ElevenLabs's interaction model
+rather than adding a shortcut editor or push-to-talk mode. They do not
+reinterpret ordinary ⌘ or ⌥ chords, they make each verb predictable by giving it
+its own key instead of a timing window, and all companion actions have distinct
+documented shortcuts.
+
+## Differences that are intentionally safer
+
+- A successful event post is not called a successful paste. ElevenLabs confirms
+  readable fields and otherwise labels the result unconfirmed.
+- Auto-send requires an app-specific rule and a warning for that exact bundle
+  identifier. It runs only after confirmed immediate insertion.
+- A recording is journaled before the first request, not merely retained after
+  a request reports failure, and its recovery copy is removed only after the
+  final text and a linked consumption receipt are atomically durable. The
+  optional successful-audio History copy has its own retention/quota policy.
+  Even sub-450 ms recordings are sent rather than guessed to be accidental.
+- History retention is a storage policy, not permission to gamble with output.
+  Under every retention setting, final text first enters a temporary durable
+  delivery escrow before source-audio recovery proof can retire. Before an
+  external paste the escrow is atomically marked possibly delivered. A crash or
+  unverified paste therefore recovers as an explicit copy/discard/one-shot
+  Paste Anyway decision, never as an unattended retry. Never Store additionally
+  removes the completed History row and creates no successful-audio copy.
+- If an affected older build left several History rows for one recording,
+  canonicalization creates one deliverable handoff and retires its siblings in
+  one pending-document transition. A sibling's possibly-delivered receipt is
+  transferred to the canonical copy before that sibling disappears.
+- Uploaded dynamic recognition context is opt-in and minimized. The separate
+  local-only spacing/capitalization read is never uploaded or stored.
+- A restored or delayed transcript does not auto-deliver. The user explicitly
+  releases it into the current focused writable editor; possibly delivered text
+  first requires the reviewed one-shot authorization.
+- Speech-to-text requests reject every HTTP redirect before a custom API-key
+  header or multipart body can be forwarded. Crash-left upload/import bodies
+  are removed only by the surviving primary instance after strict ownership,
+  name, mode, link-count, and file-type checks.
+- All automatic JSON/audio stores use descriptor-relative no-follow operations;
+  malformed, newer, symlinked, or unreadable storage fails closed instead of
+  being rewritten or used to enable risky delivery behavior.
+
+## Reference sources
+
+Superwhisper:
+
+- [Introduction](https://superwhisper.com/docs/get-started/introduction)
+- [Recording window](https://superwhisper.com/docs/get-started/interface-rec-window)
+- [History](https://superwhisper.com/docs/get-started/interface-history)
+- [Vocabulary](https://superwhisper.com/docs/get-started/interface-vocabulary)
+- [Shortcuts](https://superwhisper.com/docs/get-started/settings-shortcuts)
+- [Advanced settings](https://superwhisper.com/docs/get-started/settings-advanced)
+- [Context behavior](https://superwhisper.com/docs/common-issues/context)
+- [Changelog](https://superwhisper.com/changelog)
+
+Wispr Flow:
+
+- [What is Flow?](https://docs.wisprflow.ai/articles/2772472373-what-is-flow)
+- [Longer dictation sessions](https://docs.wisprflow.ai/articles/4841123325-Longer-dictation-sessions-%E2%80%94-now-up-to-20-minutes)
+- [External audio devices](https://docs.wisprflow.ai/articles/8884408990-connect-and-set-up-external-audio-devices)
+- [Context awareness](https://docs.wisprflow.ai/articles/4678293671-feature-context-awareness)
+- [Retry failed transcriptions](https://docs.wisprflow.ai/articles/2503460374-retry-failed-transcriptions)
+- [Dictionary](https://docs.wisprflow.ai/articles/4052411709-teach-flow-your-words-with-the-dictionary)
+- [Snippets](https://docs.wisprflow.ai/articles/5784437944-create-and-use-snippets)
+- [Desktop setup](https://docs.wisprflow.ai/articles/3152211871-setup-guide)
+- [Move and dock the Flow bar](https://docs.wisprflow.ai/articles/1790396454-move-and-dock-the-flow-bar-on-desktop)
+- [Data controls](https://wisprflow.ai/data-controls)
+- [What's new](https://wisprflow.ai/whats-new)
+
+ElevenLabs:
+
+- [Speech-to-text overview](https://elevenlabs.io/docs/capabilities/speech-to-text)
+- [Create transcript API](https://elevenlabs.io/docs/api-reference/speech-to-text/convert)
+- [Batch keyterm prompting](https://elevenlabs.io/docs/eleven-api/guides/how-to/speech-to-text/batch/keyterm-prompting)
+## Verification boundary
+
+The macOS target and focused logic suites can prove compilation, persistence,
+request construction, retry behavior, and pure delivery decisions. Isolated UI
+inspection can prove that controls are present and locally operable. Neither can
+prove the system-owned Continuity UI, physical microphone release/reconnect, or
+a target application's real marked-composition and final-insertion behavior.
+This parity pass does **not** yet claim full real-device or end-to-end
+acceptance. The checklist in
+[macOS remaining work](macos-remaining-work.md) is required before calling the
+complete experience physically verified or release-ready.

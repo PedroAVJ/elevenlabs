@@ -1,0 +1,37 @@
+{
+  "cli": {
+    "version": ">=22.2.0",
+    "appVersionSource": "remote",
+    "requireCommit": true
+  },
+  "build": {
+    "production": {
+      "environment": "production",
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "ELEVENLABS_APP_BUNDLE_IDENTIFIER": "com.pedro.ElevenLabs",
+        "ELEVENLABS_KEYBOARD_BUNDLE_IDENTIFIER": "com.pedro.ElevenLabs.Keyboard",
+        "ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER": "com.pedro.ElevenLabs.LiveActivity",
+        "ELEVENLABS_TESTS_BUNDLE_IDENTIFIER": "com.pedro.ElevenLabsTests",
+        "ELEVENLABS_APP_GROUP_IDENTIFIER": "group.com.pedro.ElevenLabs"
+      },
+      "ios": {
+        "scheme": "ElevenLabs",
+        "buildConfiguration": "Release",
+        "config": "production-ios.yml",
+        "credentialsSource": "remote",
+        "image": "latest",
+        "resourceClass": "medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6804516163"
+      }
+    }
+  }
+}

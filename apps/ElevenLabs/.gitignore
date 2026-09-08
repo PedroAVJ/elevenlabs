@@ -1,0 +1,26 @@
+DerivedData/
+.build/
+build/
+!/.eas/build/
+!/.eas/build/*.yml
+.eas-inspect/
+.eas-local-build/
+node_modules/
+.expo/
+dist/
+ios/Pods/
+ios/*.xcworkspace/
+ios/.xcode.env.local
+*.zip
+*.xcuserstate
+xcuserdata/
+.DS_Store
+scripts/local-identity.env
+credentials.json
+credentials/
+
+# Spec evidence media lives in private object storage, not in Git history.
+docs/spec-evidence/
+
+# Operator-supplied private live-test recordings
+ios/ElevenLabsTests/Fixtures/*.wav

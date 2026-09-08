@@ -1,0 +1,32 @@
+build:
+  name: ElevenLabs production archive
+  steps:
+    - eas/checkout
+    - eas/use_npm_token
+    - eas/install_node_modules
+    - eas/resolve_build_config
+    - eas/resolve_apple_team_id_from_credentials:
+        id: resolve_apple_team_id_from_credentials
+    - eas/calculate_eas_update_runtime_version:
+        id: calculate_eas_update_runtime_version
+    - run:
+        name: Install CocoaPods dependencies
+        working_directory: ./ios
+        command: pod install
+    - eas/configure_eas_update:
+        inputs:
+          resolved_eas_update_runtime_version: ${ steps.calculate_eas_update_runtime_version.resolved_eas_update_runtime_version }
+    - eas/configure_ios_credentials
+    - eas/configure_ios_version
+    - run:
+        name: Synchronize embedded bundle versions
+        command: >-
+          node scripts/sync-eas-ios-metadata.mjs
+          "${ eas.job.version.buildNumber }"
+    - eas/generate_gymfile_from_template:
+        inputs:
+          credentials: ${ eas.job.secrets.buildCredentials }
+    - eas/run_fastlane:
+        inputs:
+          resolved_eas_update_runtime_version: ${ steps.calculate_eas_update_runtime_version.resolved_eas_update_runtime_version }
+    - eas/find_and_upload_build_artifacts
