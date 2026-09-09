@@ -1,4 +1,4 @@
 {
   "expo.jsEngine": "hermes",
-  "ios.deploymentTarget": "17.0"
+  "ios.deploymentTarget": "18.0"
 }

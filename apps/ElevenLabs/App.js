@@ -7,6 +7,7 @@ import {
   Animated,
   DynamicColorIOS,
   Easing,
+  Linking,
   Modal,
   NativeEventEmitter,
   NativeModules,
@@ -91,7 +92,25 @@ function Header({ onClose, title }) {
   );
 }
 
-function Onboarding({ state, update }) {
+const privacyURL = 'https://pedro-antonio.pedroavj.chatgpt.site/dictation/privacy/';
+const supportURL = 'https://pedro-antonio.pedroavj.chatgpt.site/dictation/support/';
+
+function Onboarding({ state, update, openSettings }) {
+  if (!state.hasAPIKey) {
+    return (
+      <View style={styles.centeredPage}>
+        <View style={styles.iconTile}><Text style={styles.waveIcon}>≋</Text></View>
+        <Text style={styles.largeTitle}>Your voice. Your API key.</Text>
+        <Text style={styles.bodyCenter}>
+          Dictation Button uses your own ElevenLabs API key. Audio is sent directly to ElevenLabs for transcription, including live drafts while you record. ElevenLabs usage is charged to your account.
+        </Text>
+        <View style={styles.fullWidthActions}>
+          <Button onPress={openSettings}>Add API key</Button>
+          <Button onPress={() => Linking.openURL(privacyURL)} secondary>Privacy</Button>
+        </View>
+      </View>
+    );
+  }
   if (!state.practicedControlCenterStart) {
     return (
       <View style={styles.centeredPage}>
@@ -100,7 +119,8 @@ function Onboarding({ state, update }) {
         <Text style={styles.bodyCenter}>
           Open Control Center, touch and hold, tap Add a Control, then choose Dictation Button.
         </Text>
-        <Text style={styles.captionCenter}>Tap the new control once. Setup advances automatically when recording starts.</Text>
+        <Text style={styles.captionCenter}>Tap the control to show the Live Activity, then tap Start on the activity. Setup advances when recording starts.</Text>
+        <Button onPress={openSettings} secondary small>Settings</Button>
       </View>
     );
   }
@@ -368,7 +388,7 @@ function Settings({ close, state, update }) {
         <Text style={styles.groupTitle}>SPEECH API KEY</Text>
         <View style={styles.groupCard}>
           <Text style={styles.cardTitle}>{state.hasAPIKey ? '✓ API key saved' : 'No API key saved'}</Text>
-          <Text style={styles.cardDetail}>Stored in Keychain and never returned to JavaScript.</Text>
+          <Text style={styles.cardDetail}>Use your own ElevenLabs key with speech-to-text access. Saved securely in this device's Keychain. Usage is charged to your ElevenLabs account.</Text>
           <TextInput
             autoCapitalize="none"
             autoCorrect={false}
@@ -401,7 +421,9 @@ function Settings({ close, state, update }) {
           ))}
         </View>
 
-        <Text style={styles.privacyText}>Audio leaves this device only when you transcribe and goes directly to the configured speech service. The keyboard, Live Activity, App Group, and Keychain remain native.</Text>
+        <Text style={styles.privacyText}>Audio is sent directly to ElevenLabs for transcription, including live drafts while recording. Transcripts and retained audio stay in local History. Sentry receives crash reports and operational diagnostics without audio, transcript text, or API keys. Dictation Button is independent of ElevenLabs.</Text>
+        <Button onPress={() => Linking.openURL(privacyURL)} secondary small>Privacy policy</Button>
+        <Button onPress={() => Linking.openURL(supportURL)} secondary small>Help and support</Button>
       </ScrollView>
       <Modal animationType="slide" visible={showLanguages}>
         <LanguagePicker close={() => setShowLanguages(false)} languages={state.languages} selected={state.language.rawValue} update={update} />
@@ -534,7 +556,7 @@ export default function App() {
   let content;
   if (sessionVisible) content = <Session state={state} />;
   else if (state.phase === 'failed') content = <ErrorScreen openSettings={() => setShowSettings(true)} state={state} update={update} />;
-  else if (!state.completedOnboarding) content = <Onboarding state={state} update={update} />;
+  else if (!state.hasAPIKey || !state.completedOnboarding) content = <Onboarding openSettings={() => setShowSettings(true)} state={state} update={update} />;
   else if (state.phase === 'transcribing') content = <Session state={state} />;
   else if (state.transcriptText) content = <Transcript state={state} update={update} />;
   else content = <Ready openHistory={() => setShowHistory(true)} openSettings={() => setShowSettings(true)} />;

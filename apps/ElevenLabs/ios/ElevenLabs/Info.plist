@@ -35,8 +35,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ElevenLabsAppGroupIdentifier</key>
 	<string>$(ELEVENLABS_APP_GROUP_IDENTIFIER)</string>
-	<key>ElevenLabsPrivateBetaAPIKey</key>
-	<string>$(ELEVENLABS_PRIVATE_BETA_API_KEY)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>

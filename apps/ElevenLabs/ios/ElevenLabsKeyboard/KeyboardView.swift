@@ -296,16 +296,18 @@ struct KeyboardView: View {
     @ObservedObject var model: KeyboardModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let keyboardSetupStatusStore = KeyboardSetupStatusStore()
+    @State private var uppercase = false
 
     var body: some View {
-        Group {
+        VStack(spacing: 6) {
             if !model.hasFullAccess {
-                fullAccessPanel
+                localKeyboard
             } else if let errorMessage {
                 errorPanel(errorMessage)
             } else {
                 controlSurface
             }
+            localEditingRow
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(KBTheme.background.ignoresSafeArea())
@@ -505,6 +507,55 @@ struct KeyboardView: View {
                     )
                 )
         }
+    }
+
+    private var localKeyboard: some View {
+        VStack(spacing: 5) {
+            Text("Typing stays on device. Full Access enables dictation sharing.")
+                .font(.caption2)
+                .foregroundStyle(KBTheme.inkMuted)
+                .padding(.top, 6)
+            ForEach(["qwertyuiop", "asdfghjkl", "zxcvbnm"], id: \.self) { row in
+                HStack(spacing: 4) {
+                    ForEach(Array(row).map(String.init), id: \.self) { letter in
+                        localKey(uppercase ? letter.uppercased() : letter) {
+                            model.typeLocalCharacter(uppercase ? letter.uppercased() : letter)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 5)
+    }
+
+    private var localEditingRow: some View {
+        HStack(spacing: 5) {
+            localKey("🌐", label: "Next keyboard", action: model.nextKeyboard)
+            if !model.hasFullAccess {
+                localKey("⇧", label: "Shift") { uppercase.toggle() }
+            }
+            localKey(".", label: "Period") { model.typeLocalCharacter(".") }
+            localKey("Space") { model.typeLocalCharacter(" ") }
+            localKey("↵", label: "Return") { model.typeLocalCharacter("\n") }
+            localKey("⌫", label: "Delete", action: model.deleteLocalCharacterBeforeCursor)
+        }
+        .padding(.horizontal, 5)
+        .padding(.bottom, 6)
+    }
+
+    private func localKey(
+        _ title: String,
+        label: String? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 17))
+                .frame(maxWidth: .infinity, minHeight: 39)
+                .background(KBTheme.surface, in: RoundedRectangle(cornerRadius: 6))
+                .foregroundStyle(KBTheme.ink)
+        }
+        .accessibilityLabel(label ?? title)
     }
 
     private func errorPanel(_ message: String) -> some View {

@@ -1,6 +1,14 @@
 import Combine
 import Foundation
 
+// The archived host resolver is excluded from the shipping target. Legacy
+// state still accepts an optional identity, while public navigation is manual.
+struct HostApplicationResolution: Equatable, Sendable {
+    let bundleIdentifier: String?
+    let processIdentifier: Int32?
+    let attempts: [String]
+}
+
 struct KeyboardAppLaunchOutcome: Equatable, Sendable {
     let didOpen: Bool
     let route: String?
@@ -47,6 +55,8 @@ final class KeyboardModel: ObservableObject {
     private let insertTranscript: @MainActor (String) async
         -> KeyboardInsertionResult
     private let advanceToNextKeyboard: () -> Void
+    private let insertLocalText: (String) -> Void
+    private let deleteLocalCharacter: () -> Void
     private var pollTask: Task<Void, Never>?
     private var insertedConfirmationTask: Task<Void, Never>?
     private var insertionTask: Task<Void, Never>?
@@ -63,7 +73,9 @@ final class KeyboardModel: ObservableObject {
         currentInsertionContextFingerprint: @escaping () -> String,
         insertTranscript: @escaping @MainActor (String) async
             -> KeyboardInsertionResult,
-        advanceToNextKeyboard: @escaping () -> Void
+        advanceToNextKeyboard: @escaping () -> Void,
+        insertLocalText: @escaping (String) -> Void = { _ in },
+        deleteLocalCharacter: @escaping () -> Void = {}
     ) {
         self.store = store
         self.insertionTelemetry = insertionTelemetry
@@ -73,6 +85,8 @@ final class KeyboardModel: ObservableObject {
         self.currentInsertionContextFingerprint = currentInsertionContextFingerprint
         self.insertTranscript = insertTranscript
         self.advanceToNextKeyboard = advanceToNextKeyboard
+        self.insertLocalText = insertLocalText
+        self.deleteLocalCharacter = deleteLocalCharacter
     }
 
     var effectivePhase: SharedDictationPhase {
@@ -346,7 +360,12 @@ final class KeyboardModel: ObservableObject {
 
     func openElevenLabs() {
         guard let url = URL(string: "elevenlabs://settings") else { return }
-        Task { _ = await openContainingApp(url) }
+        Task {
+            let outcome = await openContainingApp(url)
+            if !outcome.didOpen {
+                localError = "Open Dictation Button from your Home Screen for settings or recovery."
+            }
+        }
     }
 
     private func wakeContainingAppForRecovery(sessionID: UUID) {
@@ -365,6 +384,15 @@ final class KeyboardModel: ObservableObject {
 
     func nextKeyboard() {
         advanceToNextKeyboard()
+    }
+
+    // Explicit local editing never reads shared dictation state or uses a network.
+    func typeLocalCharacter(_ text: String) {
+        insertLocalText(text)
+    }
+
+    func deleteLocalCharacterBeforeCursor() {
+        deleteLocalCharacter()
     }
 
     func dismissError() {
