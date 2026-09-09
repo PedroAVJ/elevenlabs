@@ -47,7 +47,6 @@
 		C10000000000000000000002 /* HostAppSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000002 /* HostAppSwitcher.swift */; };
 		C10000000000000000000003 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000003 /* KeyboardViewController.swift */; };
 		C10000000000000000000004 /* KeyboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000004 /* KeyboardModel.swift */; };
-		C10000000000000000000005 /* HostApplicationResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000005 /* HostApplicationResolver.swift */; };
 		C10000000000000000000006 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000006 /* KeyboardView.swift */; };
 		C10000000000000000000007 /* SharedDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* SharedDictation.swift */; };
 		C10000000000000000000008 /* ElevenLabsKeyboard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C2000000000000000000000A /* ElevenLabsKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -113,7 +112,6 @@
 		E10000000000000000000008 /* LiveActivityControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000006 /* LiveActivityControlIntents.swift */; };
 		E10000000000000000000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000007 /* Assets.xcassets */; };
 		E1000000000000000000000A /* SharedDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* SharedDictation.swift */; };
-		F10000000000000000000001 /* HostApplicationCapture.m in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* HostApplicationCapture.m */; };
 		F10000000000000000000101 /* MacActiveCaptureRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000101 /* MacActiveCaptureRecovery.swift */; };
 		F6A788D8842282FEA95CF8EC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB6461725798FC9000C62A9 /* ExpoModulesProvider.swift */; };
 		H10000000000000000000301 /* MacSingleInstanceLease.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000301 /* MacSingleInstanceLease.swift */; };
@@ -935,8 +933,6 @@
 			files = (
 				C10000000000000000000003 /* KeyboardViewController.swift in Sources */,
 				C10000000000000000000004 /* KeyboardModel.swift in Sources */,
-				C10000000000000000000005 /* HostApplicationResolver.swift in Sources */,
-				F10000000000000000000001 /* HostApplicationCapture.m in Sources */,
 				C10000000000000000000006 /* KeyboardView.swift in Sources */,
 				C10000000000000000000007 /* SharedDictation.swift in Sources */,
 				4B5400000000000000000002 /* KeyboardSetupStatus.swift in Sources */,
@@ -1043,7 +1039,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -1077,7 +1073,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1115,7 +1111,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabs/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG -Xcc -w";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_APP_BUNDLE_IDENTIFIER)";
@@ -1147,7 +1143,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabs/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE -Xcc -w";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_APP_BUNDLE_IDENTIFIER)";
@@ -1169,7 +1165,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				ELEVENLABS_TESTS_BUNDLE_IDENTIFIER = com.example.ElevenLabsTests;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				OTHER_LDFLAGS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_TESTS_BUNDLE_IDENTIFIER)";
@@ -1190,7 +1186,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				ELEVENLABS_TESTS_BUNDLE_IDENTIFIER = com.example.ElevenLabsTests;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				OTHER_LDFLAGS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ELEVENLABS_TESTS_BUNDLE_IDENTIFIER)";
@@ -1216,7 +1212,7 @@
 				ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE = ElevenLabsKeyboard/ElevenLabsKeyboard.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabsKeyboard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1249,7 +1245,7 @@
 				ELEVENLABS_KEYBOARD_ENTITLEMENTS_FILE = ElevenLabsKeyboard/ElevenLabsKeyboard.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabsKeyboard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1347,7 +1343,7 @@
 				ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER = com.example.ElevenLabs.LiveActivity;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabsLiveActivity/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1378,7 +1374,7 @@
 				ELEVENLABS_LIVE_ACTIVITY_BUNDLE_IDENTIFIER = com.pedro.ElevenLabs.LiveActivity;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ElevenLabsLiveActivity/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

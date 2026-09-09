@@ -78,14 +78,18 @@ Dictation Button is the public dictation interface owned by the parent ElevenLab
   segment in that same dictation after the paused segment is safely banked.
   Completion and cancellation turn the recording activity back into the idle
   launcher. Control Center can recreate it after a user or system dismissal.
-- The custom keyboard is delivery-only. It must never expose Start, Pause,
+- The custom keyboard is delivery-only for dictation; a basic local letter
+  keyboard remains usable without Full Access, and every state exposes Next
+  Keyboard and local editing controls. It must never expose Start, Pause,
   Resume, or Cancel. It may render the best current realtime draft; Send stops
   recording, and Send now may claim that draft while the quality-first batch
   request continues. Exactly one of realtime or batch may own insertion.
 - The prior host-detection and fixed-catalog switchback implementation remains
   dormant historical compatibility evidence. `docs/protected-switchback.sha256`
-  pins its untouched core files, while structural tests prove that active app
-  and keyboard UI do not call it. Never reconnect it without a new explicit
+  pins its archived core files. The public target excludes HostApplicationCapture.m
+  and HostApplicationResolver.swift; the shipping controller uses only public
+  lifecycle/document-proxy APIs and manual navigation. Structural tests guard
+  these exclusions and prove active UI does not initiate automatic return. Never reconnect it without a new explicit
   product decision, fresh reference inspection, and physical-device proof.
 - Builds, simulators, intent return values, and processed TestFlight builds do
   not prove Control Center, Notification Center, Dynamic Island, keyboard

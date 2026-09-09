@@ -60,9 +60,9 @@ The deployed product retains its stable application, credential, signing, Expo,
 and service identities. Independent forks must configure their own Apple team,
 bundle identifiers, Expo project, telemetry, and API credentials before distributing
 an application. The CLI uses each user's own Keychain or explicit environment key.
-Never distribute a personal provider key in a public app. The optional existing
-private-beta bootstrap remains a separate deployment feature and requires an
-operator-provided secret outside source control.
+Never distribute a personal provider key in a public app. Public Dictation
+Button builds require each user to supply a key through native Keychain setup;
+the release path rejects the legacy bundled credential.
 
 GitHub publishes Expo updates only when the repository variable
 `ELEVENLABS_PUBLISH_ENABLED=true` and `EXPO_TOKEN` are configured. Forks have no

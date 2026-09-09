@@ -3,6 +3,8 @@
 .expo
 .eas-inspect
 .eas-local-build
+.codex-artifacts
+**/.codex-artifacts
 DerivedData
 build
 dist
