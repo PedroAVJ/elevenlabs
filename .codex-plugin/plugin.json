@@ -1,6 +1,6 @@
 {
   "name": "elevenlabs",
-  "version": "0.7.37",
+  "version": "0.7.38",
   "description": "Use ElevenLabs through agent audio tools and the native Dictation Button app.",
   "author": {
     "name": "PedroAVJ",
@@ -25,7 +25,7 @@
     "shortDescription": "Use ElevenLabs audio and dictation tools",
     "longDescription": "Use ElevenLabs for agent-driven audio work and native macOS or iPhone dictation, including Scribe transcription with diarization, language hints, and domain-specific keyterms.",
     "developerName": "PedroAVJ",
-    "category": "AI",
+    "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Read",
