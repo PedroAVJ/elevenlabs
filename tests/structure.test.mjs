@@ -8,7 +8,7 @@ import test from "node:test";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const expected = {
   "name": "elevenlabs",
-  "version": "0.7.39",
+  "version": "0.7.40",
   "url": "https://github.com/PedroAVJ/elevenlabs",
   "dependencies": []
 };

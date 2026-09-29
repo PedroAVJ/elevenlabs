@@ -36,7 +36,17 @@ elevenlabs transcribe meeting.mp4 --language es --diarize --response-format diar
 
 `bin/elevenlabs` is the plugin's entry point and belongs on PATH. Other
 plugins and repos call transcription through that command rather than
-reaching into this plugin's install directory.
+reaching into this plugin's install directory. Link it from the installed
+plugin cache:
+
+```bash
+ln -sfn ~/.codex/plugins/cache/package-manager/elevenlabs/<version>/bin/elevenlabs ~/.local/bin/elevenlabs
+```
+
+Transcription briefly lived in the retired `models` plugin; this plugin is its
+owner again, with the same CLI name, Keychain credential, and cache path.
+Dependent plugins such as `whatsapp` and `macos` declare
+`elevenlabs@package-manager`.
 
 Use the `transcription` skill (`elevenlabs:transcription`) for the documented Scribe options and safety rules.
 
