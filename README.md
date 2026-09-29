@@ -40,13 +40,13 @@ reaching into this plugin's install directory. Link it from the installed
 plugin cache:
 
 ```bash
-ln -sfn ~/.codex/plugins/cache/package-manager/elevenlabs/<version>/bin/elevenlabs ~/.local/bin/elevenlabs
+ln -sfn ~/.codex/plugins/cache/near/elevenlabs/<version>/bin/elevenlabs ~/.local/bin/elevenlabs
 ```
 
 Transcription briefly lived in the retired `models` plugin; this plugin is its
 owner again, with the same CLI name, Keychain credential, and cache path.
 Dependent plugins such as `whatsapp` and `macos` declare
-`elevenlabs@package-manager`.
+`elevenlabs@near`.
 
 Use the `transcription` skill (`elevenlabs:transcription`) for the documented Scribe options and safety rules.
 
