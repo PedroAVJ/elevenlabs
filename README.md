@@ -4,7 +4,7 @@ Use ElevenLabs through agent-facing audio tools or the native Dictation Button a
 
 This repository owns two interfaces to the same program:
 
-- **Agent tools** — the `elevenlabs` CLI and skill for Scribe file transcription with language hints, diarization, keyterms, multiple output formats, and a shared local result cache.
+- **Agent tools** — the `elevenlabs` CLI and `transcription` skill for Scribe file transcription with language hints, diarization, keyterms, multiple output formats, and a shared local result cache.
 - **Dictation app** — the [Dictation Button app](apps/ElevenLabs/README.md), including a native macOS menu-bar app and an Expo iPhone app whose native Control Center button and Live Activity control dictation while its custom keyboard delivers Scribe transcripts.
 
 Raw CLI results are cached locally (`~/.cache/elevenlabs-transcripts/`, keyed by audio hash + options), so repeat transcriptions of the same file are free; pass `--no-cache` to bypass.
@@ -38,7 +38,7 @@ elevenlabs transcribe meeting.mp4 --language es --diarize --response-format diar
 plugins and repos call transcription through that command rather than
 reaching into this plugin's install directory.
 
-Use the `elevenlabs` skill for the documented Scribe options and safety rules.
+Use the `transcription` skill (`elevenlabs:transcription`) for the documented Scribe options and safety rules.
 
 ## Dictation app
 

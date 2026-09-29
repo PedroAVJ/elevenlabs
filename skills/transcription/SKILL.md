@@ -1,13 +1,13 @@
 ---
-name: elevenlabs
-description: Use ElevenLabs audio and speech tooling, including Scribe file transcription and the native ElevenLabs macOS/iPhone dictation interface.
+name: transcription
+description: Transcribe audio and video files with ElevenLabs Scribe (language hints, diarization, keyterms, multiple output formats) and work with the native ElevenLabs macOS/iPhone dictation interface.
 ---
 
-# ElevenLabs
+# Transcription
 
-Use this plugin when the user explicitly asks for ElevenLabs, when audio/speech quality matters enough to choose ElevenLabs, or when the task concerns its native dictation interface.
+Use this skill when the user explicitly asks for ElevenLabs, when audio/speech quality matters enough to choose ElevenLabs, or when the task concerns its native dictation interface.
 
-Do not title the workflow as generic transcription. The product surface is ElevenLabs; transcription is one documented use case through Scribe.
+The skill is named for its primary use case; the product surface, plugin, and CLI remain ElevenLabs, and transcription runs through Scribe.
 
 ## Native Dictation App
 

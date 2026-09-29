@@ -8,7 +8,7 @@ import test from "node:test";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const expected = {
   "name": "elevenlabs",
-  "version": "0.7.38",
+  "version": "0.7.39",
   "url": "https://github.com/PedroAVJ/elevenlabs",
   "dependencies": []
 };
@@ -137,7 +137,7 @@ test("native Dictation Button interface is bundled and uses original artwork", a
   );
   assert.deepEqual(
     await readFile(
-      join(root, "skills", "elevenlabs", "assets", "elevenlabs-icon.png"),
+      join(root, "skills", "transcription", "assets", "elevenlabs-icon.png"),
     ),
     await readFile(join(root, "assets", "elevenlabs-icon.png")),
     "the skill icon must exactly match the plugin icon",

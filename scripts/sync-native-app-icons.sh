@@ -35,7 +35,7 @@ resize() {
 
 /usr/bin/install -m 644 "$desktop_icon" "$icon_dir/AppIcon.png"
 /usr/bin/install -m 644 "$ios_icon" "$icon_dir/AppIcon-iOS.png"
-/usr/bin/install -m 644 "$desktop_icon" "$root/skills/elevenlabs/assets/elevenlabs-icon.png"
+/usr/bin/install -m 644 "$desktop_icon" "$root/skills/transcription/assets/elevenlabs-icon.png"
 resize "$desktop_icon" AppIcon-16.png 16
 resize "$desktop_icon" AppIcon-32.png 32
 resize "$desktop_icon" AppIcon-64.png 64

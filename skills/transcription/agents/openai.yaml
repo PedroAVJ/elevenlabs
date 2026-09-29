@@ -1,6 +1,6 @@
 interface:
-  display_name: "ElevenLabs"
-  short_description: "Use ElevenLabs audio and dictation tools"
+  display_name: "Transcription"
+  short_description: "ElevenLabs Scribe transcription and dictation"
   icon_small: "./assets/elevenlabs-icon.png"
   icon_large: "./assets/elevenlabs-icon.png"
   brand_color: "#111111"

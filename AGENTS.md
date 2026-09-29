@@ -1,6 +1,6 @@
 # Repository guidance
 
-- This repository is the canonical source for the `elevenlabs` plugin and its two owned interfaces: the agent-facing CLI/skill and the native Dictation Button macOS/iPhone app under `apps/ElevenLabs`.
+- This repository is the canonical source for the `elevenlabs` plugin and its two owned interfaces: the agent-facing `elevenlabs` CLI and `transcription` skill and the native Dictation Button macOS/iPhone app under `apps/ElevenLabs`.
 - Follow `apps/ElevenLabs/AGENTS.md` for native-app work. Dictation Button is the public app identity; ElevenLabs remains the compatibility-sensitive target, executable, bundle-family, URL-scheme, storage, telemetry, and provider identity. Keep those internal identifiers stable unless a migration is explicitly designed and physically verified.
 - `assets/elevenlabs-icon.svg` and `assets/dictation-button-ios-icon.svg` are the deterministic sources for the original Dictation Button macOS/plugin and opaque full-bleed iOS artwork. Run `npm run sync:native-icons` after changing either, then keep every Xcode app-icon size synchronized. Public idle surfaces use generic waveform or microphone symbols; recording, pause, error, keyboard, HUD, and Live Activity symbols remain state-specific.
 - The CLI and native app currently use separate Keychain records. Do not unify or rename them as part of an unrelated change.

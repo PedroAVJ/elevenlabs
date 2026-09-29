@@ -1,6 +1,6 @@
 {
   "name": "@pedroavj/elevenlabs",
-  "version": "0.7.38",
+  "version": "0.7.39",
   "private": true,
   "description": "Use ElevenLabs through agent audio tools and the native Dictation Button app.",
   "license": "MIT",
