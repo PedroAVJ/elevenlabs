@@ -27,13 +27,19 @@
 # The explicit 2026-08-28 Dictation Button rebrand changed only display copy in
 # the containing-app plist, shared delivery warning, and keyboard model. Internal
 # identifiers and dormant host capture, resolution, catalog, and return remain
+# The authorized 2026-09-08 public-review preparation removes the bundled
+# provider credential from app launch/plist and adds local character editing
+# plus an always-visible keyboard switch. Dormant host-resolution, capture,
+# catalog, and automatic-return source remains unchanged and is excluded
+# from the public keyboard target. The shipping controller now uses public
+# document-proxy/lifecycle APIs and requires the user to return manually.
 # unchanged and disconnected.
-63e0e5a5c861c45020c8b968769a0c370dd6b022cccf2b8be80da9795f100512  apps/ElevenLabs/ios/ElevenLabs/AppDelegate.swift
+39810d565c7e7a2e71c7a6d3092e93044d360b109de979b899295ed5519b524e  apps/ElevenLabs/ios/ElevenLabs/AppDelegate.swift
 23ecba761a1716044b01e90c885ce1af9f39f7a742bf7b76344cc323ce084b51  apps/ElevenLabs/ios/ElevenLabs/HostAppSwitcher.swift
-6ab5936f958e226d03a749053e9cd3348364bd1d5501bdbec180f81258ac5a9e  apps/ElevenLabs/ios/ElevenLabs/Info.plist
+afcb91ea2dadd0cf1b7d700e84f19cf67181b37086ca314acc80ac0f5ab6e920  apps/ElevenLabs/ios/ElevenLabs/Info.plist
 04d701c73feeeefb349fddaaf6f391d6d8c425c02c2c660311a581ce91c81910  apps/ElevenLabs/ios/ElevenLabs/SharedDictation.swift
 e298f168e5f3d7b371deaff35b9994f7a5395297aa633d5e358e846f9c985a73  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationCapture.h
 a9ffb901ec0075cfc151765b09025c90a97425cac555db3727d0775630d892be  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationCapture.m
 8bcfa92cd70a5a944959f2d7ee8863ec7de6d052945a06d4615084fa97db016f  apps/ElevenLabs/ios/ElevenLabsKeyboard/HostApplicationResolver.swift
-2ea96818559d02f1dfe6d7de935155f501775ab6bc8941adcfd07a02e097da42  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardModel.swift
-80d16281b0f457587acf33cc4cad380b244cf2956e4e528405fad1b65e387975  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardViewController.swift
+c88241296d55289862acbc06491d34524be7ba77b275c1a4353b9354bac918f3  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardModel.swift
+be9470d423774bd835cb858ba8167a8712d5336af24e8ae7de8b1d94d23391d8  apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardViewController.swift

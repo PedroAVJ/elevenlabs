@@ -18,16 +18,9 @@ const appConfig = JSON.parse(
   fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'),
 );
 const appVersion = suppliedAppVersion ?? appConfig.expo?.version;
-const privateBetaApiKey = process.env.ELEVENLABS_PRIVATE_BETA_API_KEY?.trim();
 
 if (!/^\d+(?:\.\d+){0,2}$/.test(appVersion ?? '')) {
   throw new Error(`Invalid Expo iOS app version: ${appVersion ?? '<missing>'}`);
-}
-
-if (!privateBetaApiKey) {
-  throw new Error(
-    'Missing ELEVENLABS_PRIVATE_BETA_API_KEY in the production EAS environment',
-  );
 }
 
 const projectFile = path.join(
@@ -92,11 +85,6 @@ for (const plistFile of plistFiles) {
     if (sentryDsn) {
       plist = replacePlistString(plist, 'SentryDSN', sentryDsn);
     }
-    plist = replacePlistString(
-      plist,
-      'ElevenLabsPrivateBetaAPIKey',
-      privateBetaApiKey,
-    );
   }
 
   if (!dryRun) {
@@ -107,5 +95,5 @@ for (const plistFile of plistFiles) {
 const sentryState = process.env.ELEVENLABS_SENTRY_DSN ? 'enabled' : 'disabled';
 const mode = dryRun ? 'Validated' : 'Synchronized';
 console.log(
-  `${mode} ElevenLabs ${appVersion} (${buildNumber}) across three iOS bundles; observability ${sentryState}; private-beta credential configured.`,
+  `${mode} Dictation Button ${appVersion} (${buildNumber}) across three iOS bundles; observability ${sentryState}; user-provided speech credentials.`,
 );

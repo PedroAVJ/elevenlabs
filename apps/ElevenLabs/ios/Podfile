@@ -9,7 +9,7 @@ ENV['RCT_USE_PREBUILT_RNCORE'] ||= podfile_properties['ios.buildReactNativeFromS
 ENV['EXPO_USE_PRECOMPILED_MODULES'] = '0' if podfile_properties['EXPO_USE_PRECOMPILED_MODULES'] == 'false'
 ENV['EXPO_USE_PRECOMPILED_MODULES'] ||= '1'
 
-platform :ios, podfile_properties['ios.deploymentTarget'] || '17.0'
+platform :ios, podfile_properties['ios.deploymentTarget'] || '18.0'
 prepare_react_native_project!
 
 target 'ElevenLabs' do

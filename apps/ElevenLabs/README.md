@@ -11,8 +11,8 @@ The Xcode project contains four product targets:
   copy, share, and local transcript history through its native bridge.
 - **`ElevenLabsKeyboard`** — the keyboard extension target that shows
   quiet branding while idle and one Send action during dictation, then inserts
-  the transcript at the writable cursor focused when delivery completes. It
-  does not implement ordinary typing.
+  the transcript at the writable cursor focused when delivery completes. Without Full Access it provides basic local letter input and editing;
+  a Next Keyboard control remains visible in every state.
 - **`ElevenLabsLiveActivity`** — the Lock Screen and Dynamic Island target providing the recording
   launcher, state, pause, and cancel surfaces for iPhone dictation.
 
@@ -254,13 +254,12 @@ are under an arbitrary duration threshold.
 For local development, `ElevenLabsMac` also accepts the API key through the
 `ELEVENLABS_API_KEY` environment variable. Never commit an API key.
 
-The single-tester TestFlight beta temporarily receives an operator-provided key
-from the local `ELEVENLABS_PRIVATE_BETA_API_KEY` release environment. A release
-launch copies it into the ElevenLabs iPhone Keychain before app state is constructed.
-The release metadata step fails if that secret is absent. This is a private-beta
-bridge, not a public credential-distribution design: rotate the key and replace
-the embedded bootstrap with a scoped service credential or authenticated proxy
-before broadening tester access.
+Public TestFlight and App Store builds contain no speech-provider credential.
+Each user supplies an ElevenLabs API key through the first-launch setup, stored
+in the native Keychain. Existing on-device keys remain in place during upgrades.
+Release metadata ignores the old private-beta key variable, and the local
+release command refuses to submit an IPA containing the legacy credential key.
+The public iPhone app requires iOS 18 or newer for its Control Center control.
 
 ## Run the iPhone app and keyboard
 
@@ -317,13 +316,11 @@ and inside `apps/ElevenLabs`. Log in with `eas login` or export `EXPO_TOKEN`,
 then provide these values in the local release shell when a native build is
 required:
 
-- `ELEVENLABS_PRIVATE_BETA_API_KEY` for the current single-tester bootstrap;
 - `ELEVENLABS_SENTRY_DSN` for production observability.
 
-EAS variables with secret visibility cannot be read by a local build, which is
-why the private-beta key must exist in the local shell. Signing
+EAS variables with secret visibility cannot be read by a local build. Signing
 material remains in Expo's managed credential service and is never committed.
-Build working files stay under ignored `.eas-local-build/` and are removed when
+Build working files stay under clone-local `.codex-artifacts/native-build/release/` and are removed when
 the command finishes. GitHub Actions deploys only the OTA update; it never
 builds or submits native code and uses no self-hosted runner.
 
@@ -722,3 +719,18 @@ that location with `ELEVENLABS_REFERENCE_IPA_DIR` when needed.
 ## License
 
 ElevenLabs is available under the [MIT License](LICENSE).
+
+## Public review boundary
+
+The public keyboard does not infer the destination app or open it through
+private UIKit or LaunchServices APIs. Historical host-capture and resolver
+sources remain in the repository as compatibility evidence but are excluded
+from its shipping target. Return to the destination manually, focus its text
+field, then use the keyboard's Send action. The current document proxy owns
+insertion; failed insertion keeps the transcript recoverable.
+
+[Privacy](https://pedro-antonio.pedroavj.chatgpt.site/dictation/privacy/) and
+[support](https://pedro-antonio.pedroavj.chatgpt.site/dictation/support/) describe
+the iPhone app's own-key setup, live audio transfer, local retention, and
+operational diagnostics. Physical dictation acceptance and Apple review are
+separate from compilation and provider upload.

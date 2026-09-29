@@ -25,12 +25,6 @@ final class ElevenLabsAppDelegate: ExpoAppDelegate {
         ElevenLabsClient.cleanupAbandonedMultipartUploads()
 #if DEBUG
         seedAPIKeyFromEnvironmentIfNeeded()
-#else
-        // The production EAS build injects the operator-configured private-beta key at archive
-        // time. Move it into this app identity's Keychain before AppModel is
-        // created so TestFlight launches ready to dictate. The bootstrap never
-        // logs or returns credential material.
-        _ = PrivateBetaAPIKeyBootstrap().installIfPresent()
 #endif
         let delegate = ElevenLabsReactNativeDelegate()
         let factory = ExpoReactNativeFactory(delegate: delegate)

@@ -184,7 +184,7 @@ test("CI publishes OTA while the operator separately owns native builds", () => 
     localBuildScript,
     /workflow:run|type: build|build:cancel|submit:cancel/,
   );
-  assert.match(localBuildScript, /ELEVENLABS_PRIVATE_BETA_API_KEY/);
+  assert.doesNotMatch(localBuildScript, /ELEVENLABS_PRIVATE_BETA_API_KEY/);
   assert.match(localBuildScript, /ELEVENLABS_SENTRY_DSN/);
   for (const buildListLine of localBuildScript.match(/^.*build:list.*$/gm) ?? []) {
     assert.doesNotMatch(
@@ -242,4 +242,38 @@ test("CI publishes OTA while the operator separately owns native builds", () => 
   );
   assert.match(mobilePackage.scripts["eas:build:local"], /build-ios-local\.sh/);
   assert.match(easIgnore, /^\.eas-local-build$/m);
+});
+
+test("public iPhone release cannot bundle the operator's speech credential", () => {
+  const info = read("apps/ElevenLabs/ios/ElevenLabs/Info.plist");
+  const launch = read("apps/ElevenLabs/ios/ElevenLabs/AppDelegate.swift");
+  const metadata = read("apps/ElevenLabs/scripts/sync-eas-ios-metadata.mjs");
+  const build = read("apps/ElevenLabs/scripts/build-ios-local.sh");
+  assert.doesNotMatch(info, /ElevenLabsPrivateBetaAPIKey|PRIVATE_BETA_API_KEY/);
+  assert.doesNotMatch(launch, /PrivateBetaAPIKeyBootstrap/);
+  assert.doesNotMatch(metadata, /PRIVATE_BETA_API_KEY|privateBetaApiKey/);
+  assert.match(build, /Refusing to submit an IPA containing a bundled speech credential/);
+  assert.ok(build.indexOf('Refusing to submit an IPA containing') < build.indexOf('"${eas[@]}" submit --platform ios'));
+});
+
+test("new users can reach their own credential setup before Control Center onboarding", () => {
+  const app = read("apps/ElevenLabs/App.js");
+  const onboarding = app.slice(app.indexOf('function Onboarding'), app.indexOf('function useReducedMotion'));
+  assert.ok(onboarding.indexOf('!state.hasAPIKey') < onboarding.indexOf('!state.practicedControlCenterStart'));
+  assert.match(onboarding, /<Button onPress={openSettings}>Add API key<\/Button>/);
+  assert.match(app, /including live drafts while recording/);
+  assert.match(app, /dictation\/privacy\//);
+});
+
+test("the public keyboard excludes private host capture and uses public local editing", () => {
+  const project = read("apps/ElevenLabs/ios/ElevenLabs.xcodeproj/project.pbxproj");
+  const controller = read("apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardViewController.swift");
+  const view = read("apps/ElevenLabs/ios/ElevenLabsKeyboard/KeyboardView.swift");
+  assert.doesNotMatch(project, /HostApplicationCapture\.m in Sources|HostApplicationResolver\.swift in Sources/);
+  assert.doesNotMatch(controller, /HostApplicationResolver|LSApplicationWorkspace|NSClassFromString|unsafeBitCast|openUsingResponderChain/);
+  assert.match(controller, /textDocumentProxy\.insertText\(text\)/);
+  assert.match(controller, /textDocumentProxy\.deleteBackward\(\)/);
+  assert.match(controller, /advanceToNextInputMode\(\)/);
+  assert.match(view, /if !model\.hasFullAccess \{\s+localKeyboard/);
+  assert.match(view, /label: "Next keyboard", action: model\.nextKeyboard/);
 });

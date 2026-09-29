@@ -54,11 +54,6 @@ if [ "$mode" = "check" ]; then
   exit 0
 fi
 
-if [ -z "${ELEVENLABS_PRIVATE_BETA_API_KEY:-}" ]; then
-  echo "Set ELEVENLABS_PRIVATE_BETA_API_KEY in this local shell before building the private TestFlight beta." >&2
-  exit 1
-fi
-
 if [ -z "${ELEVENLABS_SENTRY_DSN:-}" ]; then
   echo "Set ELEVENLABS_SENTRY_DSN in this local shell before building the production beta." >&2
   exit 1
@@ -71,13 +66,20 @@ for tool in xcodebuild pod fastlane unzip; do
   fi
 done
 
+native_root="$repo_root/.codex-artifacts/native-build"
+mkdir -p "$native_root"
+native_root="$(cd "$native_root" && pwd -P)"
+case "$native_root" in
+  "$repo_root"/*) ;;
+  *) echo "Refusing native output outside this clone." >&2; exit 1 ;;
+esac
 echo "==> Running the native ElevenLabs suite serially"
-swift test --jobs 1
+swift test --scratch-path "$native_root/SwiftPM" --jobs 1
 
-build_root="$project_root/.eas-local-build"
+build_root="$native_root/release"
 artifact_path="$build_root/ElevenLabs.ipa"
 verification_root="$build_root/verify"
-expected_root="$project_root/.eas-local-build"
+expected_root="$native_root/release"
 test "$build_root" = "$expected_root"
 mkdir -p "$build_root"
 find "$build_root" -mindepth 1 -delete
@@ -111,6 +113,7 @@ export TMPDIR="$tmp_root/"
 export GYM_BUILD_PATH="$archive_root"
 export GYM_RESULT_BUNDLE_PATH="$result_bundle_path"
 export EXPO_NO_CAPABILITY_SYNC=1
+export EXTRA_PACKAGER_ARGS="${EXTRA_PACKAGER_ARGS:-} --max-workers 1"
 
 echo "==> Building the signed ElevenLabs IPA on this Mac"
 "${eas[@]}" build --platform ios --profile production --local --output "$artifact_path" --non-interactive
@@ -119,6 +122,12 @@ test -s "$artifact_path"
 echo "==> Verifying the IPA's embedded Expo fingerprint"
 mkdir -p "$verification_root"
 unzip -q "$artifact_path" -d "$verification_root"
+app_plist="$(find "$verification_root/Payload" -maxdepth 2 -name Info.plist -type f -print -quit)"
+test -n "$app_plist"
+if /usr/libexec/PlistBuddy -c 'Print :ElevenLabsPrivateBetaAPIKey' "$app_plist" >/dev/null 2>&1; then
+  echo "Refusing to submit an IPA containing a bundled speech credential." >&2
+  exit 1
+fi
 expo_plist="$(find "$verification_root/Payload" -path '*/Expo.plist' -type f -print -quit)"
 test -n "$expo_plist"
 embedded_fingerprint="$(/usr/libexec/PlistBuddy -c 'Print :EXUpdatesRuntimeVersion' "$expo_plist")"
